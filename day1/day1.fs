@@ -6,23 +6,21 @@ let input() =
     readLines "input.txt"
     |> Seq.map int
 
-let test = seq { 199;
-                 200;
-                 208;
-                 210;
-                 200;
-                 207;
-                 240;
-                 269;
-                 260;
-                 263}
-
+let test = [ 199;
+             200;
+             208;
+             210;
+             200;
+             207;
+             240;
+             269;
+             260;
+             263]
 
 let part1 measurements =
-    let first = Seq.head measurements
-    Seq.fold (fun (prev, n) cur -> (cur, if cur > prev then n+1 else n))
-             (first, 0) (Seq.tail measurements)
-    |> snd
+    Seq.pairwise measurements
+    |> Seq.map (fun (prev, cur) -> if cur > prev then 1 else 0)
+    |> Seq.sum
 
 let answer1 = input() |> part1
 
