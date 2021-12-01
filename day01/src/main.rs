@@ -29,6 +29,9 @@ fn part2(measurements: &[i64]) -> i32 {
         .sum()
 }
 
+// TODO: The following two functions, read_lines and input, are way
+// too ugly. It must be possible to write them nicer
+
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
     P: AsRef<Path>,
