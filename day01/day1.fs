@@ -4,7 +4,7 @@ let readLines filePath = System.IO.File.ReadLines filePath
 
 let input() =
     readLines "input.txt"
-    |> Seq.map int
+    |> Seq.map int64
 
 let test = [ 199;
              200;
@@ -24,9 +24,9 @@ let part1 measurements =
 
 let answer1 = input() |> part1
 
-let part2 (measurements : int seq) =
-    Seq.windowed 3 measurements
-    |> Seq.map Array.sum
-    |> part1
+let part2 measurements =
+    Seq.windowed 4 measurements
+    |> Seq.filter (fun arr -> Array.last arr > Array.head arr)
+    |> Seq.length
 
 let answer2 = input() |> part2
