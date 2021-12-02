@@ -1,4 +1,5 @@
 import Data.List
+import Data.Foldable (foldMap')
 
 test = map parse ["forward 5"
                  , "down 5"
@@ -47,17 +48,18 @@ answer1 = part1 <$> input
 data Aim = Aim !Int !Int !Int
   deriving (Show)
 
----- Failed attempt at making a semigroup
 instance Semigroup Aim where
-  (Aim x y z) <> (Aim a b c) = Aim (x+a) (y+z*b) (z+c)
+  (Aim h v a) <> (Aim x y z) = Aim (h+x) (v+y*a) (a+z)
 
-instance Monoid Aim where
+instance Monoid Aim where -- FIXME not really a monoid
   mempty = Aim 0 0 0
 
 effect2 (Forward x) = Aim x x 0
-effect2 (Down x) = Aim 0 1 x
-effect2 (Up x) = Aim 0 1 (-x)
----- end
+effect2 (Down x) = Aim 0 0 x
+effect2 (Up x) = Aim 0 0 (-x)
+
+part2_par commands = hori * vert
+  where Aim hori vert _ = foldMap' effect2 commands
 
 update (Aim h v a) (Forward x) = Aim (h+x) (v+x*a) a
 update (Aim h v a) (Down x) = Aim h v (a+x)
