@@ -9,6 +9,7 @@ Potential ambitions under consideration:
 
  * Keep pace, solve the daily puzzle on the day it is posted.
  * Try to make parallel rather than sequential solutions.
+ * Set a time box of max 1 hour per day, so that I don't overthink it.
  * Each day is solved in a language different from the previous day,
    no language must be used more than twice during the event.
  * Each day is solved in two different languages.
