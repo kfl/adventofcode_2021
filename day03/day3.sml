@@ -53,3 +53,28 @@ fun part1 input =
     end
 
 val answer1 = part1(input())
+
+
+fun partition(cs, (cz, zeros, co, ones)) =
+    if hd cs = #"0" then (cz+1, (tl cs) :: zeros, co, ones)
+    else (cz, zeros, co+1, (tl cs) :: ones)
+
+fun rating [result] _ acc = (rev acc) @ result
+  | rating input select acc =
+    let val init = (0, [], 0, [])
+        val (cz, zeros, co, ones) = foldl partition init input
+        val (c, filtered) = if select (co-cz) then (#"1", ones)
+                            else (#"0", zeros)
+    in  rating filtered select (c :: acc)
+    end
+
+fun parseBin cs =
+    Int.scan StringCvt.BIN List.getItem cs |> valOf |> #1
+
+fun part2 input =
+    let val oxygen = rating input (fn x => x >= 0) []
+        val co2 = rating input (fn x => x < 0) []
+    in parseBin oxygen * parseBin co2
+    end
+
+val answer2 = input() |> part2
