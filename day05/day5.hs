@@ -37,31 +37,27 @@ instance Semigroup Pic where
 instance Monoid Pic where
   mempty = Pic Map.empty
 
+fromList = Pic . Map.fromList
+
 effect (Line x1 y1 x2 y2) | x1 == x2 =
-      Pic $ Map.fromList [ ((x1, y), 1) | y <- [min y1 y2 .. max y1 y2]]
+      fromList [ ((x1, y), 1) | y <- [min y1 y2 .. max y1 y2]]
 effect (Line x1 y1 x2 y2) | y1 == y2 =
-      Pic $ Map.fromList [ ((x, y1), 1) | x <- [min x1 x2 .. max x1 x2]]
-effect _ = mempty
+      fromList [ ((x, y1), 1) | x <- [min x1 x2 .. max x1 x2]]
+effect (Line x1 y1 x2 y2) =
+      fromList [ ((x, y), 1) | (x, y) <- zip [x1, xstep x1 .. x2]
+                                             [y1, ystep y1 .. y2]]
+      where xstep = if x1 > x2 then pred else succ
+            ystep = if y1 > y2 then pred else succ
+
 
 part1 lines = length $ filter (>= 2) $ Map.elems pic
-  where Pic pic = foldMap effect lines
+  where Pic pic = foldMap effect $ filter straight lines
+        straight (Line x1 y1 x2 y2) = x1 == x2 || y1 == y2
 
 answer1 = part1 <$> input
 
 
-
-effect2 (Line x1 y1 x2 y2) | x1 == x2 =
-      Pic $ Map.fromList [ ((x1, y), 1) | y <- [min y1 y2 .. max y1 y2]]
-effect2 (Line x1 y1 x2 y2) | y1 == y2 =
-      Pic $ Map.fromList [ ((x, y1), 1) | x <- [min x1 x2 .. max x1 x2]]
-effect2 (Line x1 y1 x2 y2) =
-      Pic $ Map.fromList [ ((x, y), 1)
-                         | (x, y) <- zip [x1, xstep x1 .. x2]
-                                         [y1, ystep y1 .. y2]]
-      where xstep = if x1 > x2 then pred else succ
-            ystep = if y1 > y2 then pred else succ
-
 part2 lines = length $ filter (>= 2) $ Map.elems pic
-  where Pic pic = foldMap effect2 lines
+  where Pic pic = foldMap effect lines
 
 answer2 = part2 <$> input
