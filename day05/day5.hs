@@ -39,15 +39,13 @@ instance Monoid Pic where
 
 fromList = Pic . Map.fromList
 
-effect (Line x1 y1 x2 y2) | x1 == x2 =
-      fromList [ ((x1, y), 1) | y <- [min y1 y2 .. max y1 y2]]
-effect (Line x1 y1 x2 y2) | y1 == y2 =
-      fromList [ ((x, y1), 1) | x <- [min x1 x2 .. max x1 x2]]
-effect (Line x1 y1 x2 y2) =
-      fromList [ ((x, y), 1) | (x, y) <- zip [x1, xstep x1 .. x2]
-                                             [y1, ystep y1 .. y2]]
-      where xstep = if x1 > x2 then pred else succ
-            ystep = if y1 > y2 then pred else succ
+effect (Line x1 y1 x2 y2) = fromList [ ((x, y), 1) | (x, y) <- zip xs ys]
+      where xs = mkseq x1 x2
+            ys = mkseq y1 y2
+            mkseq n1 n2 = case compare n1 n2 of
+                            EQ -> cycle [n1]
+                            LT -> [n1 .. n2]
+                            GT -> [n1, pred n1 .. n2]
 
 
 part1 lines = length $ filter (>= 2) $ Map.elems pic
