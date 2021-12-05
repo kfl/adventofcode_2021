@@ -17,18 +17,18 @@ test = map parse [ "0,9 -> 5,9"
                  , "5,5 -> 8,2"
                  ]
 
-input = map parse <$> lines <$> readFile "input.txt"
+input = map parse . lines <$> readFile "input.txt"
 
 data Line = Line !Int !Int !Int !Int
   deriving (Show, Eq)
 
 parse :: String -> Line
 parse line = Line x1 y1 x2 y2
-  where [x1, y1, x2, y2] = map read $ L.wordsBy (flip elem ", ->") line
+  where [x1, y1, x2, y2] = map read $ L.wordsBy (`elem` ", ->") line
 
 type Pos = (Int, Int)
 
-data Pic = Pic (Map Pos Int)
+newtype Pic = Pic (Map Pos Int)
   deriving (Show, Eq)
 
 instance Semigroup Pic where
@@ -43,7 +43,7 @@ effect (Line x1 y1 x2 y2) = fromList [ ((x, y), 1) | (x, y) <- zip xs ys]
       where xs = mkseq x1 x2
             ys = mkseq y1 y2
             mkseq n1 n2 = case compare n1 n2 of
-                            EQ -> cycle [n1]
+                            EQ -> repeat n1
                             LT -> [n1 .. n2]
                             GT -> [n1, pred n1 .. n2]
 
