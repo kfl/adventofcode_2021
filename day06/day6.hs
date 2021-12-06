@@ -1,9 +1,8 @@
 module Day6 where
 
-import Data.List
-import qualified Data.Vector as V
-import Data.Vector ((!))
-import qualified Data.Vector.Mutable as MV
+import qualified Data.List as L
+import qualified Data.Vector.Unboxed as V
+import Data.Vector.Unboxed ((!))
 
 test = parse "3,4,3,1,2"
 
@@ -13,7 +12,7 @@ parse :: String -> [Int]
 parse str = read $ "[" ++ str ++ "]"
 
 step ns = acc ++ ns'
-  where (acc, ns') = mapAccumR f [] ns
+  where (acc, ns') = L.mapAccumR f [] ns
         f acc 0 = (8:acc, 6)
         f acc n = (acc, n-1)
 
@@ -25,13 +24,13 @@ answer1 = part1 <$> input
 
 
 shift = V.generate 9 (\i -> (i+1) `mod` 9)
-(vec, i) += c = V.modify (\v -> MV.modify v (+ c) i) vec
+(vec, i) += c = V.accum (+) vec [(i,c)]
 
 vstep gen = (shifted, 6) += gen0
   where gen0 = gen ! 0
         shifted = V.backpermute gen shift
 
-part2 ns = sum $ gens !! 256
+part2 ns = V.sum $ gens !! 256
   where initial = V.generate 9 (\i -> length $ filter (== i) ns)
         gens = iterate vstep initial
 
