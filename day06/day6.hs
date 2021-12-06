@@ -25,9 +25,11 @@ answer1 = part1 <$> input
 
 
 shift = V.generate 9 (\i -> (i+1) `mod` 9)
+(vec, i) += c = V.modify (\v -> MV.modify v (+ c) i) vec
 
-vstep gen = V.modify (\v -> MV.modify v (\x -> x + gen ! 0) 6) $
-            V.backpermute gen shift
+vstep gen = (shifted, 6) += gen0
+  where gen0 = gen ! 0
+        shifted = V.backpermute gen shift
 
 part2 ns = sum $ gens !! 256
   where initial = V.generate 9 (\i -> length $ filter (== i) ns)
