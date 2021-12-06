@@ -19,6 +19,11 @@ step ns = acc ++ ns'
 part1 ns = length $ gens !! 80
   where gens = iterate step ns
 
+-- Reuse part2 for computing the answer to part1, but much faster
+part1_fast ns = V.sum $ gens !! 80
+  where initial = V.generate 9 (\i -> length $ filter (== i) ns)
+        gens = iterate vstep initial
+
 answer1 = part1 <$> input
 
 
