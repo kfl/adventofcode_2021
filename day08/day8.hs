@@ -38,6 +38,7 @@ answer1 = part1 <$> input
 
 
 
+-- Just some scratch notes, mapping is not really used for anything
 mapping = [
             (1, "cf")
           , (7, "acf")
@@ -59,7 +60,6 @@ mapping = [
           , (5, "abdfg")
           ]
 
-
 findLength n = filter ((n ==) . length)
 
 get key = fromJust . lookup key
@@ -73,6 +73,7 @@ deduce len a b pats = xp
   where candidates = filter ((len ==) . length) pats
         xp = [ ((length p1, length $ p1 \\ b), p) | p <- candidates, let p1 = p \\ a ]
 
+-- Should/could have been written with deduce and mapping, but this value was just copied from repl
 magic = [ ((5,3), '6'), ((4,2), '9'), ((4,3), '0')
         , ((3,2), '2'), ((2,1), '3'), ((3,1), '5')]
 
