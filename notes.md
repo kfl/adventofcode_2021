@@ -74,10 +74,11 @@ Dang, undergrad math is far away. Remembered that media could be used
 for part 1 (a similar question was on my exam back then, something
 something about linearity and optimality).
 
-Couldn't math out the answer to part 2, and decided to make O(n^2)
+Couldn't math out the answer to part 2, and decided to make $O(n^2)$
 algorithm just to finish.
 
 NICE TO HAVE: Clean up code.
+
 
 Day 8
 -----
