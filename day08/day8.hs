@@ -70,7 +70,7 @@ knowns pats = [ ('1', head $ findLength 2 pats)
               , ('8', head $ findLength 7 pats)]
 
 deduce len a b pats = xp
-  where candidates = filter ((len ==) . length) pats
+  where candidates = findLength len pats
         xp = [ ((length p1, length $ p1 \\ b), p) | p <- candidates, let p1 = p \\ a ]
 
 -- Should/could have been written with deduce and mapping, but this value was just copied from repl
