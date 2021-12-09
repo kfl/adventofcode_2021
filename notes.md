@@ -90,3 +90,15 @@ Haskell version. It's data parallel though.
 Unexpected: Couldn't remember how to read a text file in Prolog
 
 NICE TO HAVE: Make a Prolog version.
+
+
+Day 9
+-----
+
+Haskell. OK flood algorithm, would have like too use either union-find
+for the flooding or have used the standard data parallel basin
+algorithm. Maybe in the future.
+
+Part2 is morally data parallel.
+
+NICE TO HAVE: Clean up code.
