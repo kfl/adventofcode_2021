@@ -95,10 +95,21 @@ NICE TO HAVE: Make a Prolog version.
 Day 9
 -----
 
-Haskell. OK flood algorithm, would have like too use either union-find
-for the flooding or have used the standard data parallel basin
-algorithm. Maybe in the future.
+Haskell. OK flood-fill algorithm, would have like too use either
+union-find for the flooding or have used the standard data parallel
+basin algorithm. Maybe in the future.
 
-Part2 is morally data parallel.
+Part1 is morally data parallel.
 
-NICE TO HAVE: Clean up code.
+Part2: There are some tasty constrains in the problem spec: heights are
+constrained to 0-8, all locations (except walls) are part of exactly
+one basin, however I didn't need to exploit any of them to get OK
+running time. I suspect that it is possible to make an elegant
+one-pass data parallel algorithm because of these constrains.
+
+Unexpected: `Vector` was clunky to use. I started out by trying to
+make my own 2D view of 1D vector, but quickly realised that is wasn't
+worth it for this task. I missed `Array2` from SML.
+
+NICE TO HAVE: Clean up code. Implement with union-find in Rust or
+Haskell. Implement SML version.
