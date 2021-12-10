@@ -113,3 +113,11 @@ worth it for this task. I missed `Array2` from SML.
 
 NICE TO HAVE: Clean up code. Implement with union-find in Rust or
 Haskell. Implement SML version.
+
+
+Day 10
+------
+
+Was in the mood for SML. Nothing fancy.
+
+NICE TO HAVE: Maybe a data parallel version that uses the stack monoid 
