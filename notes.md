@@ -70,7 +70,7 @@ compile time.
 Day 7
 -----
 
-Dang, undergrad math is far away. Remembered that media could be used
+Dang, undergrad math is far away. Remembered that median could be used
 for part 1 (a similar question was on my exam back then, something
 something about linearity and optimality).
 
@@ -120,4 +120,12 @@ Day 10
 
 Was in the mood for SML. Nothing fancy.
 
-NICE TO HAVE: Maybe a data parallel version that uses the stack monoid 
+Unexpected: Slightly disappointed about the part2 task description. It
+would have been more interesting to find minimal corrections to *all*
+lines and not just the incomplete lines. Although the *minimal*
+requirement might go too far into "Hmm, that's interesting" territory.
+
+NICE TO HAVE: Maybe a data parallel version that uses the stack
+monoid. Solution to own my idea for part2, just to see how difficult
+it is (I think the obvious algorithm is optimal, but I haven't checked.)
+
