@@ -55,11 +55,12 @@ let part1 ns =
         total <- total + step grid
     total
 
+let answer1 = part1 input
+
+
 // Why is this not a library function???
-let exists p grid =
-    Seq.exists p
-    <| seq { for i in 0 .. Array2D.length1 grid - 1 do
-             for j in 0 .. Array2D.length2 grid - 1 -> grid.[i,j] }
+let exists p (grid : 'a[,]) =
+    Seq.exists p <| Seq.cast<'a> grid
 
 let part2 ns =
     let grid = array2D ns
@@ -68,3 +69,5 @@ let part2 ns =
         step grid |> ignore
         total <- total + 1
     total
+
+let answer2 = part2 input
