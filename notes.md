@@ -129,3 +129,22 @@ NICE TO HAVE: Maybe a data parallel version that uses the stack
 monoid. Solution to own my idea for part2, just to see how difficult
 it is (I think the obvious algorithm is optimal, but I haven't checked.)
 
+
+Day 11
+------
+
+Pre-code thoughts: Part 1 looks like it's naturally solved by using
+mutation,and the is some flood-fill like at day 9. Should I try to
+reuse my code from day 9, or should I switch to use an imperative 2D
+array in Haskell, if so I might as well switch to SML, F#, or
+Rust. Maybe use `massiv`.
+
+Decided to use F# to work a bit with `Array2D` and `Seq`.
+
+Unexpected: `Array2D` is not a `Seq`, this made everything rather
+clunky. I think I spend the majority of my time being surprised about
+missing library functions for `Array2D` and fighting the rather verbose
+generator/sequence syntax.
+
+NICE TO HAVE: Haskell or Rust version for comparison. Maybe use active
+patterns for `flood`.
