@@ -148,3 +148,22 @@ generator/sequence syntax.
 
 NICE TO HAVE: Haskell or Rust version for comparison. Maybe use active
 patterns for `flood`.
+
+
+Day 12
+------
+
+Pre-code thoughts: Working with graphs. Interesting properties that
+may be exploited: no cycles (because otherwise we wouldn't be asked to
+find all cycles); graph is static; it seems that could make a derived
+graph where big caves are edges and (lists/sets of) small caves are
+nodes; we are working with finite regular languages. The problem again
+seems quite suited for Prolog, but I'll probably just use a
+backtracking monad (aka the list monad).
+
+Haskell with backtracking via the list monad.
+
+Unexpected: Part 2 was super fun. Started by not reading the task
+description carefully and missed the points that a *single* small cave
+can be visited at most twice, I thought it was *all* small caves that
+could be visited twice (except for `start` and `end`).
