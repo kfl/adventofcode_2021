@@ -4,6 +4,8 @@ module Day12 where
 import Data.Char (isUpper)
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map, (!))
+import qualified Data.Set as Set
+
 
 test = map parse [ "start-A"
                  , "start-b"
@@ -60,16 +62,21 @@ part1 edges = length allPaths
 answer1 = part1 <$> input
 
 
+data Capacity a = Free a
+                | Full a
+                deriving (Show, Eq)
+
 canVisit _ cave | big cave = True
 canVisit _ "start" = False
-canVisit seen cave = Map.notMember cave seen
-                     || all (< 2) (Map.elems seen)
+canVisit (Free seen) cave = True
+canVisit (Full seen) cave = cave `Set.notMember` seen
 
 visit cave seen | big cave = seen
-visit cave seen =  Map.alter (\case Nothing -> Just 1
-                                    Just n -> Just $ n+1) cave seen
+visit cave (Free seen) = if cave `Set.member` seen then Full $ seen
+                         else Free $ Set.insert cave seen
+visit cave (Full seen) = Full $ Set.insert cave seen
 
-paths2 _ seen from to | from == to = [seen]
+paths2 _ seen from to | from == to = [1]
 paths2 graph seen from to =
   [ path | neighbour <- graph ! from, canVisit seen' neighbour
          , path <- paths2 graph seen' neighbour to]
@@ -79,6 +86,6 @@ paths2 graph seen from to =
 
 part2 edges = length allPaths
   where graph = mkGraph edges
-        allPaths = paths2 graph Map.empty "start" "end"
+        allPaths = paths2 graph (Free Set.empty) "start" "end"
 
 answer2 = part2 <$> input
