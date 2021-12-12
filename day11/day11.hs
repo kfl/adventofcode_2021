@@ -27,7 +27,7 @@ type Grid = A.Array (Int, Int) Int
 
 mkGrid :: [[Int]] -> Grid
 mkGrid nums = A.listArray bounds $ concat nums
-  where bounds = ((0,0), (length nums - 1, (length $ head nums) - 1))
+  where bounds = ((0,0), (length nums - 1, length (head nums) - 1))
 
 tgrid :: Grid
 tgrid = mkGrid test
