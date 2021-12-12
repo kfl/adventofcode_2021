@@ -1,8 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Day12 where
 
-import Data.List
-import Data.Char
+import Data.Char (isUpper)
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map, (!))
 
@@ -54,7 +53,7 @@ paths graph seen from to =
   [ path | neighbour <- graph ! from, not $ visited seen neighbour
          , path <- paths graph (from : seen) neighbour to]
 
-part1 edges = length $ allPaths
+part1 edges = length allPaths
   where graph = mkGraph edges
         allPaths = paths graph [] "start" "end"
 
@@ -64,7 +63,7 @@ answer1 = part1 <$> input
 canVisit _ cave | big cave = True
 canVisit _ "start" = False
 canVisit seen cave = Map.notMember cave seen
-                     || (all (< 2) $ Map.elems seen)
+                     || all (< 2) (Map.elems seen)
 
 visit cave seen | big cave = seen
 visit cave seen =  Map.alter (\case Nothing -> Just 1
@@ -72,9 +71,11 @@ visit cave seen =  Map.alter (\case Nothing -> Just 1
 
 paths2 _ seen from to | from == to = [seen]
 paths2 graph seen from to =
-  let seen' = visit from seen in
   [ path | neighbour <- graph ! from, canVisit seen' neighbour
          , path <- paths2 graph seen' neighbour to]
+  where
+    seen' = visit from seen
+
 
 part2 edges = length allPaths
   where graph = mkGraph edges
