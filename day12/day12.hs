@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
-module Day12 where
+module Main where
 
 import Data.Char (isUpper)
 import qualified Data.Map.Strict as Map
@@ -72,7 +72,7 @@ canVisit (Free seen) cave = True
 canVisit (Full seen) cave = cave `Set.notMember` seen
 
 visit cave seen | big cave = seen
-visit cave (Free seen) = if cave `Set.member` seen then Full $ seen
+visit cave (Free seen) = if cave `Set.member` seen then Full seen
                          else Free $ Set.insert cave seen
 visit cave (Full seen) = Full $ Set.insert cave seen
 
@@ -89,3 +89,8 @@ part2 edges = length allPaths
         allPaths = paths2 graph (Free Set.empty) "start" "end"
 
 answer2 = part2 <$> input
+
+main = do
+  inp <- input
+  print $ part1 inp
+  print $ part2 inp
