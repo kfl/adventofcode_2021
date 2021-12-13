@@ -167,3 +167,12 @@ Unexpected: Part 2 was super fun. Started by not reading the task
 description carefully and missed the points that a *single* small cave
 can be visited at most twice, I thought it was *all* small caves that
 could be visited twice (except for `start` and `end`).
+
+
+Day 13
+------
+
+Pre-code thoughts: The task description seems to suggest that we'll be
+working with sparse sets of coordinates.
+
+Plain Haskell.
