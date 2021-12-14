@@ -176,3 +176,13 @@ Pre-code thoughts: The task description seems to suggest that we'll be
 working with sparse sets of coordinates.
 
 Plain Haskell.
+
+
+Day 14
+------
+
+Plain Haskell. Didn't have a lot of time for today's task. Thus, my
+code ended up more messy than I wanted. I think I can make a monoid
+for counting-maps which will make the code much nicer.
+
+NICE TO HAVE: Data parallel version.
