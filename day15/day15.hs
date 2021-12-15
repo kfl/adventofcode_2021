@@ -67,12 +67,13 @@ bfs start grid = step initial Map.empty
         (idx, cost) :<| rest ->
           case visited !? idx of
                 Nothing -> visit idx cost rest $ Map.insert idx cost visited
-                Just c | cost < c -> visit idx cost rest $ Map.insert idx cost visited
-                _ -> step rest visited
+                Just c -> if cost < c then visit idx cost rest $ Map.insert idx cost visited
+                          else visit idx c rest visited
 
     visit idx cost queue visited =
-      step (queue >< Seq.fromList [ (n, cc) | n <- neighbours grid idx, let cc = cost + grid ! n, cc `less` (visited !? n) ])
-           visited
+      step (queue >< Seq.fromList relevant) visited'
+      where relevant = [ (n, cc) | n <- neighbours grid idx, let cc = cost + grid ! n, cc `less` (visited !? n) ]
+            visited' = Map.fromList relevant `Map.union` visited
 
 part1 input = res
   where
@@ -83,7 +84,7 @@ part1 input = res
 
 answer1 = part1 <$> input
 
-
+bigger :: Grid -> Grid
 bigger grid = A.array bnds [ ((i+x*(ii+1), j+y*(jj+1)), (grid ! (i,j) + x + y - 1) `mod` 9 + 1) |
                              (i, j) <- A.indices grid, x <- [0 .. 4], y <- [0 .. 4] ]
   where (origin, (ii,jj)) = A.bounds grid
