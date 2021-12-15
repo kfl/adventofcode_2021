@@ -1,0 +1,21 @@
+cabal-version:      2.4
+name:               day15
+version:            0.1.0.0
+
+license:            MIT
+license-file:       LICENSE
+author:             Ken Friis Larsen
+maintainer:         ken@friislarsen.net
+
+copyright: Ken Friis Larsen <ken@friislarsen.net>
+
+executable day15
+    main-is: day15.hs
+    build-depends:    array
+                    , base ^>=4.14.3.0
+                    , containers
+                    , psqueues
+                    , split
+
+    hs-source-dirs:   .
+    default-language: Haskell2010

@@ -186,3 +186,18 @@ code ended up more messy than I wanted. I think I can make a monoid
 for counting-maps which will make the code much nicer.
 
 NICE TO HAVE: Data parallel version.
+
+
+Day 15
+------
+
+Pre-code thoughts: Looks like a search problem, or perhaps a min-flow
+networks problem. Interesting properties that may be exploited: We'll
+only need to visit a place once, all costs are positive (and small). A
+straightforward BFS should solve part 1, but an A* could also be fun.
+
+Plain Haskell, simple BFS could solves both part, but is rather slow.
+
+NICE TO HAVE: Proper implementation of, say, Dijkstra's algorithm for
+single-source shortest-paths.
+
