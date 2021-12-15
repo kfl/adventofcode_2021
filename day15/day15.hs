@@ -5,14 +5,12 @@ import Control.Monad (forM_)
 import qualified Data.Char as C
 import qualified Data.List as L
 import qualified Data.List.Split as S
-import qualified Data.Map.Strict as Map
-import Data.Map.Strict (Map, (!?))
+import Data.IntMap.Strict (IntMap, (!?))
+import qualified Data.IntMap.Strict as IntMap
 import qualified Data.Set as Set
 import Data.Sequence (Seq (..), (><))
 import qualified Data.Sequence as Seq
 import qualified Data.HashPSQ as Q
-
-import Data.Bifunctor
 
 import qualified Data.Array.Unboxed as A
 import Data.Array.Unboxed ((!))
@@ -51,35 +49,39 @@ showGrid grid = do
   where (_, (maxX, maxY)) = A.bounds grid
 
 
-
 neighbours grid (i, j) = [ idx | idx <- [(i+1, j), (i-1,j), (i, j+1), (i, j-1)]
                                , A.bounds grid `A.inRange` idx ]
 
 x `less` may = maybe True (x <) may
 
-bfs :: (Int, Int) -> Grid -> Map (Int, Int) Int
-bfs start grid = step initial Map.empty
+
+bfs :: (Int, Int) -> Grid -> IntMap Int
+bfs start grid = step initial IntMap.empty
   where
     initial = Seq.fromList [ (n, grid ! n) | n <- neighbours grid start]
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
     step queue visited =
       case queue of
         Empty -> visited
         (idx, cost) :<| rest ->
           case visited !? idx of
-                Nothing -> visit idx cost rest $ Map.insert idx cost visited
-                Just c -> if cost < c then visit idx cost rest $ Map.insert idx cost visited
+                Nothing -> visit idx cost rest $ IntMap.insert (index idx) cost visited
+                Just c -> if cost < c then visit idx cost rest $ IntMap.insert (index idx) cost visited
                           else visit idx c rest visited
 
     visit idx cost queue visited =
       step (queue >< Seq.fromList relevant) visited'
       where relevant = [ (n, cc) | n <- neighbours grid idx, let cc = cost + grid ! n, cc `less` (visited !? n) ]
-            visited' = Map.fromList relevant `Map.union` visited
+            visited' = IntMap.fromList [(index n, cc) | (n, cc) <- relevant] `IntMap.union` visited
 
 part1 input = res
   where
     grid = mkGrid input
     visited = bfs (0,0) grid
     (_, end) = A.bounds grid
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
     Just res = visited !? end
 
 answer1 = part1 <$> input
@@ -94,10 +96,11 @@ bigger grid = A.array bnds [ ((i+x*(ii+1), j+y*(jj+1)), (grid ! (i,j) + x + y - 
 part2 :: [[Int]] -> Int
 part2 input = res
   where
-    grid = mkGrid input
-    big = bigger grid
-    visited = bfs (0,0) big
-    (_, end) = A.bounds big
+    grid = bigger $ mkGrid input
+    visited = bfs (0,0) grid
+    (_, end) = A.bounds grid
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
     Just res = visited !? end
 
 
