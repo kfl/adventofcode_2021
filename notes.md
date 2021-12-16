@@ -201,3 +201,11 @@ Plain Haskell, simple BFS could solves both part, but is rather slow.
 NICE TO HAVE: Proper implementation of, say, Dijkstra's algorithm for
 single-source shortest-paths.
 
+
+Day 16
+------
+
+Pre-code thoughts: Looks like simple de-serialisation task.
+
+Haskell with parser combinators and printf.
+
