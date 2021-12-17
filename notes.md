@@ -209,3 +209,9 @@ Pre-code thoughts: Looks like simple de-serialisation task.
 
 Haskell with parser combinators and printf.
 
+
+Day 17
+------
+
+Pre-code thoughts: A simulation/parameter search problem it seem. For
+part1 brute force seems sufficient.
