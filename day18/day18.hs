@@ -95,12 +95,9 @@ part1 input = magnitude $ L.foldl1' add input
 
 answer1 = part1 <$> input
 
-combinations [] = []
-combinations (x:xs) = (map (\y -> (x, y)) xs) ++ combinations xs
-
 part2 input = maximum res
   where
-    res = [ magnitude n | (x, y) <- combinations input, n <- [x `add` y, y `add` x]]
+    res = [ magnitude n | x:rest <- L.tails input, y <- rest, n <- [x `add` y, y `add` x]]
 
 answer2 = part2 <$> input
 
