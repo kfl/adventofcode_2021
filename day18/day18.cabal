@@ -11,7 +11,8 @@ copyright: Ken Friis Larsen <ken@friislarsen.net>
 
 executable day18
     main-is: day18.hs
-    build-depends:    base ^>=4.14.3.0
+    build-depends:    base ^>=4.14.3.0,
+                      containers
 
 
     hs-source-dirs:   .

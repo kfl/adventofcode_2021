@@ -4,6 +4,9 @@ module Main where
 import Control.Applicative((<|>))
 import qualified Data.Char as C
 import qualified Data.List as L
+import qualified Data.Sequence as Seq
+import Data.Sequence (Seq(..), (><))
+import Data.Bifunctor
 import Text.ParserCombinators.ReadP
 
 test1 = map parse [ "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]"
@@ -61,7 +64,7 @@ addLeft k (Pair p1 p2) = Pair (addLeft k p1) p2
 addRight k (Reg n) = Reg $ k+n
 addRight k (Pair p1 p2) = Pair p1 (addRight k p2)
 
-explodeAt _ (Reg r) = Nothing
+explodeAt _ (Reg _) = Nothing
 explodeAt level (Pair (Reg r1) (Reg r2)) | level > 3 = Just (Reg 0, r1, r2)
 explodeAt level (Pair p1 p2) =
   case (explodeAt (level+1) p1, explodeAt (level+1) p2) of
@@ -70,7 +73,7 @@ explodeAt level (Pair p1 p2) =
     _ -> Nothing
 
 splits (Reg r) | r > 9 = Just $ Pair (Reg $ r `div` 2) (Reg $ (r + 1) `div` 2)
-splits (Reg r) = Nothing
+splits (Reg _) = Nothing
 splits (Pair p1 p2) =
   case (splits p1, splits p2) of
     (Just p1, _) -> Just $ Pair p1 p2
@@ -101,3 +104,66 @@ main = do
   inp <- input
   print $ part1 inp
   print $ part2 inp
+  print $ alt_part1 inp
+  print $ alt_part2 inp
+
+
+-- Alternative solution -----------------------------------
+--
+-- Instead of representing snailfish numbers as pairs, vi can
+-- represent them as a flat sequence of (Depth, Regular number)
+-- pairs.
+
+type Depth = Int
+type SNum = Seq (Depth, Int)
+
+fromPair :: Pair -> SNum
+fromPair p = convert 0 p
+  where convert level (Reg n) = Seq.singleton (level, n)
+        convert level (Pair p1 p2) = convert (level+1) p1 >< convert (level+1) p2
+
+addFirst _ Empty = Empty
+addFirst k ((d, n) :<| rest) = (d, k+n) :<| rest
+
+Empty `addLast` _ = Empty
+(rest :|> (d,n)) `addLast` k = rest :|> (d, k+n)
+
+alt_explode n = cursor Empty n
+  where
+    cursor _ Empty = Nothing
+    cursor before ((5,a) :<| (5, b) :<| after) =
+          Just $ before `addLast` a >< (4, 0) :<| b `addFirst` after
+    cursor before (x :<| rest) = cursor (before :|> x) rest
+
+alt_splits n = cursor Empty n
+  where
+    cursor _ Empty = Nothing
+    cursor before ((d,r) :<| after) | r > 9 =
+           Just $ before >< (d+1, r `div` 2) :<| (d+1, (r + 1) `div` 2) :<| after
+    cursor before (x :<| rest) = cursor (before :|> x) rest
+
+alt_action n = alt_explode n <|> alt_splits n
+
+alt_reduce n = maybe n alt_reduce $ alt_action n
+
+alt_add n1 n2 = alt_reduce $ fmap (first (+1)) (n1 >< n2)
+
+toPair :: SNum -> Pair
+toPair n = p
+  where
+    (p, Empty) = collect 0 n
+
+    collect :: Depth -> SNum -> (Pair, SNum)
+    collect level ((d, n) :<| rest) | level == d = (Reg n, rest)
+                                    | otherwise  = (Pair p1 p2, rest'')
+      where
+        (p1, rest') = collect (level+1) ((d, n) :<| rest)
+        (p2, rest'') = collect (level+1) rest'
+
+
+alt_part1 input = magnitude .toPair $ L.foldl1' alt_add $ map fromPair input
+
+alt_part2 input = maximum res
+  where
+    flat = map fromPair input
+    res = [ magnitude $ toPair n | x:rest <- L.tails flat, y <- rest, n <- [x `alt_add` y, y `alt_add` x]]
