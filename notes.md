@@ -215,3 +215,26 @@ Day 17
 
 Pre-code thoughts: A simulation/parameter search problem it seem. For
 part1 brute force seems sufficient.
+
+Haskell, didn't bother writing a parser as the input was trivial to
+parse by hand.
+
+
+Day 18
+------
+
+Pre-code thoughts: Seem like we are going to work with
+trees. Observations: for part1 it seems plausible that it might not be
+necessary to construct the tree to compute the magnitude (but where's
+the fun in that); for addition it's unclear whether the best approach
+is to do in two steps build pair then reduce, or make a smart
+constructor that always return reduced pairs. Wonder if we can assume
+that input is always reduced? It seems so from the task description.
+
+Haskell, nice task. Ended up with a version that's "obviously"
+correct, in the sense that each piece of code corresponds to a
+specific piece of the task description. At first I tied to do both
+`explodeAt` and `splits` in one pass. However, that strategy makes it
+hard to give priority to `explodeAt` over `splits`, for instance there
+might a split which is more to the left than an explode, in which case
+we still have to take the explode over the split. Fun times.
