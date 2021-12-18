@@ -1,13 +1,10 @@
 
 module Main where
 
+import Control.Applicative((<|>))
 import qualified Data.Char as C
 import qualified Data.List as L
-import Text.Printf (printf)
 import Text.ParserCombinators.ReadP
-import Data.Bifunctor
-import Data.Maybe
-
 
 test1 = map parse [ "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]"
                   , "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]"
@@ -80,9 +77,8 @@ splits (Pair p1 p2) =
     (_, Just p2) -> Just $ Pair p1 p2
     _ -> Nothing
 
-action n = case explodeAt 0 n of
-             Just (n, _, _) -> Just n
-             _ -> splits n
+action n = explode <|> splits n
+  where explode = fmap (\(n, _, _) -> n) $ explodeAt 0 n
 
 reduce n = maybe n reduce $ action n
 
