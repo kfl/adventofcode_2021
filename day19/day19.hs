@@ -89,7 +89,7 @@ alt_overlap (adjustedScanner, fixed) (scanner_i, versions) = listToMaybe found
         f <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
         p <- Set.elems points,
         let offset  = f `diff` p
-            adjusted = Set.map (move offset) points, -- Could we use mapMonotonic here?
+            adjusted = Set.mapMonotonic (move offset) points,
         Set.size (fixed `Set.intersection` adjusted) >= 12 ]
 
 alt_match :: [(Offset, Set Point)] -> [(Int, [Set Point])] -> [(Offset, Set Point)]
