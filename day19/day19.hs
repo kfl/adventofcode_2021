@@ -8,9 +8,6 @@ import qualified Data.Set as Set
 import Data.Set (Set)
 import Data.Either (partitionEithers)
 import Data.Maybe (mapMaybe, listToMaybe)
-import qualified Data.Sequence as Seq
-import Data.Sequence (Seq(..), (><))
-import Data.Bifunctor
 
 test = parse <$> readFile "test.txt"
 input = parse <$> readFile "input.txt"
@@ -51,7 +48,6 @@ orientations = [ \ (x,y,z) -> (x,y,z)
                , \ (x,y,z) -> (-z,y,x)
                ]
 
-
 type Offset = (Int, Int, Int)
 
 overlap :: (Offset, Set Point) -> (Int, Set Point) -> Maybe (Offset, Set Point)
@@ -63,12 +59,12 @@ overlap (adjustedScanner, fixed) (scanner_i, points) = listToMaybe found -- Do w
     -- All possible matches
     found =
       [ (offset, adjusted) |
-        a <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
+        f <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
         trans <- orientations,
-        p    <- Set.toList points,
-        let offset  = a `diff` (trans p)
+        p <- Set.toList points,
+        let offset  = f `diff` (trans p)
             adjusted = Set.map (move offset . trans) points,
-        Set.size (Set.intersection fixed adjusted) >= 12 ]
+        Set.size (fixed `Set.intersection` adjusted) >= 12 ]
 
 match :: [(Offset, Set Point)] -> [(Int, Set Point)] -> [(Offset, Set Point)]
 match fixed [] = fixed
