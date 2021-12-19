@@ -50,34 +50,8 @@ orientations = [ \ (x,y,z) -> (x,y,z)
 
 type Offset = (Int, Int, Int)
 
-overlap :: (Offset, Set Point) -> (Int, Set Point) -> Maybe (Offset, Set Point)
-overlap (adjustedScanner, fixed) (scanner_i, points) = listToMaybe found -- Do we need to backtrack? I hope not
-  where
-    diff (x, y, z) (x', y', z') = (x - x', y - y', z - z')
-    move (x, y, z) (x', y', z') = (x + x', y + y', z + z')
-
-    -- All possible matches
-    found =
-      [ (offset, adjusted) |
-        f <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
-        trans <- orientations,
-        p <- Set.elems points,
-        let offset  = f `diff` (trans p)
-            adjusted = Set.map (move offset . trans) points,
-        Set.size (fixed `Set.intersection` adjusted) >= 12 ]
-
-match :: [(Offset, Set Point)] -> [(Int, Set Point)] -> [(Offset, Set Point)]
-match fixed [] = fixed
-match fixed scanners = match (fixed ++ matched) missing
-  where
-    (matched, missing) = partitionEithers $
-                         map (\s -> case mapMaybe (`overlap` s) fixed of
-                                      [] -> Right s
-                                      adjusted : _ -> Left adjusted)
-                             scanners
-
-alt_overlap :: (Offset, Set Point) -> (Int, [Set Point]) -> Maybe (Offset, Set Point)
-alt_overlap (adjustedScanner, fixed) (scanner_i, versions) = listToMaybe found
+overlap :: (Offset, Set Point) -> (Int, [Set Point]) -> Maybe (Offset, Set Point)
+overlap (adjustedScanner, fixed) (scanner_i, versions) = listToMaybe found
   where
     diff (x, y, z) (x', y', z') = (x - x', y - y', z - z')
     move (x, y, z) (x', y', z') = (x + x', y + y', z + z')
@@ -92,12 +66,12 @@ alt_overlap (adjustedScanner, fixed) (scanner_i, versions) = listToMaybe found
             adjusted = Set.mapMonotonic (move offset) points,
         Set.size (fixed `Set.intersection` adjusted) >= 12 ]
 
-alt_match :: [(Offset, Set Point)] -> [(Int, [Set Point])] -> [(Offset, Set Point)]
-alt_match fixed [] = fixed
-alt_match fixed scanners = alt_match (fixed ++ matched) missing
+match :: [(Offset, Set Point)] -> [(Int, [Set Point])] -> [(Offset, Set Point)]
+match fixed [] = fixed
+match fixed scanners = match (fixed ++ matched) missing
   where
     (matched, missing) = partitionEithers $
-                         map (\s -> case mapMaybe (`alt_overlap` s) fixed of
+                         map (\s -> case mapMaybe (`overlap` s) fixed of
                                       [] -> Right s
                                       adjusted : _ -> Left adjusted)
                              scanners
@@ -121,6 +95,6 @@ main = do
   inp <- input
   let (_,scanner0) : rest = inp
       versions = map (\(i, initial) -> (i, [ Set.map trans initial | trans <- orientations ])) rest
-      matched = alt_match [((0,0,0), scanner0)] versions
+      matched = match [((0,0,0), scanner0)] versions
   print $ part1 matched
   print $ part2 matched
