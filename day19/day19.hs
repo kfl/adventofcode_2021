@@ -7,7 +7,7 @@ import qualified Data.List.Split as S
 import qualified Data.Set as Set
 import Data.Set (Set)
 import Data.Either (partitionEithers)
-import Data.Maybe (mapMaybe)
+import Data.Maybe (mapMaybe, listToMaybe)
 import qualified Data.Sequence as Seq
 import Data.Sequence (Seq(..), (><))
 import Data.Bifunctor
@@ -54,47 +54,50 @@ orientations = [ \ (x,y,z) -> (x,y,z)
 
 type Offset = (Int, Int, Int)
 
-overlap :: Set Point -> (Int, Set Point) -> Maybe (Set Point)
-overlap fixed (scanner_i, points) =
-  case found of
-    adjusted : _ -> Just adjusted -- Do we need to backtrack? I hope not
-    _            -> Nothing
- where
-  diff (x, y, z) (x', y', z') = (x - x', y - y', z - z')
-  move (x, y, z) (x', y', z') = (x + x', y + y', z + z')
+overlap :: (Offset, Set Point) -> (Int, Set Point) -> Maybe (Offset, Set Point)
+overlap (adjustedScanner, fixed) (scanner_i, points) = listToMaybe found -- Do we need to backtrack? I hope not
+  where
+    diff (x, y, z) (x', y', z') = (x - x', y - y', z - z')
+    move (x, y, z) (x', y', z') = (x + x', y + y', z + z')
 
-  -- All possible matches
-  found =
-    [ adjusted |
-      a <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
-      trans <- orientations,
-      p    <- Set.toList points,
-      let offset  = a `diff` (trans p)
-          adjusted = Set.map (move offset . trans) points,
-      Set.size (Set.intersection fixed adjusted) >= 12 ]
+    -- All possible matches
+    found =
+      [ (offset, adjusted) |
+        a <- take (Set.size fixed - 11) $ Set.elems fixed, -- We don't need to check the last 11 elements
+        trans <- orientations,
+        p    <- Set.toList points,
+        let offset  = a `diff` (trans p)
+            adjusted = Set.map (move offset . trans) points,
+        Set.size (Set.intersection fixed adjusted) >= 12 ]
 
-match :: Set Point -> [(Int, Set Point)] -> Set Point
+match :: [(Offset, Set Point)] -> [(Int, Set Point)] -> [(Offset, Set Point)]
 match fixed [] = fixed
-match fixed scanners = match (Set.unions $ fixed : matched) missing
+match fixed scanners = match (fixed ++ matched) missing
   where
     (matched, missing) = partitionEithers $
-                         map (\s -> case fixed `overlap` s of
-                                        Nothing -> Right s
-                                        Just adjusted -> Left adjusted)
+                         map (\s -> case mapMaybe (`overlap` s) fixed of
+                                      [] -> Right s
+                                      adjusted : _ -> Left adjusted)
                              scanners
 
 
-part1 input = Set.size $ match scanner0 rest
-  where (_,scanner0) : rest = input
+part1 matched = Set.size $ Set.unions $ map snd matched
 
-answer1 = part1 <$> input
+--answer1 = part1 <$> input
 
-part2 input = res
-  where res = 42
+part2 matched = maximum dists
+  where
+    scanners = map fst matched
+    dists = [ abs (x1 - x2) + abs (y1 - y2) + abs (z1 - z2)
+            | (x1, y1, z1) <- scanners
+            , (x2, y2, z2) <- scanners
+            ]
 
-answer2 = part2 <$> input
+--answer2 = part2 <$> input
 
 main = do
   inp <- input
-  print $ part1 inp
-  print $ part2 inp
+  let (_,scanner0) : rest = inp
+      matched = match [((0,0,0), scanner0)] rest
+  print $ part1 matched
+  print $ part2 matched
