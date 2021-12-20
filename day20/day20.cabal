@@ -1,0 +1,22 @@
+cabal-version:      2.4
+name:               day20
+version:            0.1.0.0
+
+license:            MIT
+license-file:       LICENSE
+author:             Ken Friis Larsen
+maintainer:         ken@friislarsen.net
+
+copyright: Ken Friis Larsen <ken@friislarsen.net>
+
+executable day20
+    main-is: day20.hs
+    build-depends:    array,
+                      base ^>=4.14.3.0,
+                      containers,
+                      split,
+                      vector
+
+
+    hs-source-dirs:   .
+    default-language: Haskell2010
