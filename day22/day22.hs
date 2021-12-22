@@ -93,7 +93,21 @@ part2 steps = res
 
 answer2 = part2 <$> input
 
+doStep3 (ons, offs) (posneg, cuboid) =
+  if posneg then (cuboid : offOverlap ++ ons, onOverlap ++ offs)
+  else (ons ++ offOverlap, onOverlap ++ offs)
+  where
+    onOverlap = mapMaybe (overlap cuboid) ons
+    offOverlap = mapMaybe (overlap cuboid) offs
+
+part3 steps = res
+  where
+    (ons, offs) = L.foldl' doStep3 ([], []) steps
+    res = sum (map size ons) - sum (map size offs)
+
+
 main = do
   inp <- input
   print $ part1 inp
   print $ part2 inp
+  print $ part3 inp
