@@ -238,3 +238,27 @@ specific piece of the task description. At first I tied to do both
 hard to give priority to `explodeAt` over `splits`, for instance there
 might a split which is more to the left than an explode, in which case
 we still have to take the explode over the split. Fun times.
+
+
+Day 22
+------
+
+Pre-code thoughts: Looks like we'll be doing interval analysis. Thus
+tries or perhaps bitsets could be useful. `IntSet` is based on
+Patricia trees so it should be a good starting point. Or maybe we need
+to use segment trees.
+
+Did part by simple unfolding of cuboids to sets.
+
+Part 2 is interesting. We end up computing the cardinality of the
+union off a large set (two actually) that we don't want to construct,
+we use that card(S1 ⋃ S2) = card(S1) + card(S2) - card(S1 ∩ S2). We
+don't want to construct unions, because if we consider cuboids as
+sets, then the union of two cuboids can generally not be denoted by a
+cuboid, however the intersection of two cuboids is either empty or can
+be denoted by a cuboid. Thus for each step we just need to compute
+which cuboids we need to add and which overlaps (intersections) we
+need to subtract.
+
+NICE-TO-HAVE: This should be able to be done in a data parallel
+manner. Could be fun to do a version in Rust.
