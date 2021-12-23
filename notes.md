@@ -267,3 +267,23 @@ lot when compiling the program (in ghci it's still a factor ~7).
 
 NICE-TO-HAVE: This should be able to be done in a data parallel
 manner. Could be fun to do a version in Rust.
+
+
+Day 23
+------
+
+Pre-code thoughts: looks like a state space search problem.
+
+Places:
+  hallway (11): left2,left1,X,ab,X,bc,X,cd,X,right1,right2 (X's are illegal)
+
+  rooms: a1,a2,b1,b2,c1,c2,d1,d2
+
+Part 1: Haskell version of shortest-path-faster (I think). Runs in 20s
+Part 2: Arg, the changes in the task description requires a major
+refactoring. I should have been so clever with the representation of
+hallway and room places.
+
+
+
+
