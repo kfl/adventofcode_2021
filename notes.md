@@ -281,9 +281,20 @@ Places:
 
 Part 1: Haskell version of shortest-path-faster (I think). Runs in 20s
 Part 2: Arg, the changes in the task description requires a major
-refactoring. I should have been so clever with the representation of
-hallway and room places.
+refactoring. I should not have been so clever with the representation
+of hallway and room places.
 
+
+Day 24
+------
+
+Pre-code thoughts: Ah, it's symbolic execution time.
+
+Solved with Haskell and Z3 (via the `sbv` library). Took the
+opportunity to practice with `sbv`.
+
+NICE-TO-HAVE: Clean up the code a bit, it should be possible to share
+code between `maximalModelNumber` and `minimalModelNumber`.
 
 
 
