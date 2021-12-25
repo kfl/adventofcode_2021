@@ -12,6 +12,7 @@ test = parse $ unlines [ "inp z"
                        , "inp x"
                        , "mul z 3"
                        , "eql z x"
+                       , "add z -1"
                        ]
 
 
