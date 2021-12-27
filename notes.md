@@ -297,8 +297,8 @@ Pre-code thoughts: Ah, it's symbolic execution time.
 Solved with Haskell and Z3 (via the `sbv` library). Took the
 opportunity to practice with `sbv`.
 
-NICE-TO-HAVE: Clean up the code a bit, it should be possible to share
-code between `maximalModelNumber` and `minimalModelNumber`.
+NICE-TO-HAVE: Clean up the code a bit, find out how to extract the
+result directly from the data type returned from `sbv`.
 
 
 Day 25

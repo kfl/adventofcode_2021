@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -7,6 +8,7 @@ import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map, (!))
 import Text.ParserCombinators.ReadP
 import qualified Data.SBV as S
+
 
 test = parse $ unlines [ "inp z"
                        , "inp x"
@@ -73,9 +75,9 @@ interp env state (inst : rest) = interp env state' rest
                                Eql -> \e1 e2 -> S.ite (e1 S..== e2) 1 0
                          in state{ regs = Map.insert r1 (fun e1 e2) $ regs state}
 
-
-maximalModelNumber prog = S.optimize S.Lexicographic $ do
-  let svars = ["inp_" ++ show i | i <- [0 .. 13] ]
+programModel prog = do
+  let inputs = filter (\case Inp _ -> True; _ -> False) prog
+      svars = ["inp_" ++ show i | i <- [0 .. length inputs-1] ]
   vars <- mapM S.sInt64 svars
   let zipped = zip svars vars
       env = Map.fromList zipped
@@ -84,43 +86,27 @@ maximalModelNumber prog = S.optimize S.Lexicographic $ do
       z = regs state ! 'z'
   S.constrain $ z S..== 0
   let mnum = modelNo vars
-  modelNoI64 <- S.free "modelNoI64"
-  S.constrain $ modelNoI64 S..== mnum
-  S.maximize "model number" $ mnum
+  modelVar <- S.free "model number"
+  S.constrain $ modelVar S..== mnum
+  pure mnum
 
   where
     modelNo xs = foldl (\n x -> 10*n + x) 0 xs
     initial = State (Map.fromList [ (r, 0) | r <- ['w'..'z'] ]) 0
 
 
-part1 prog = do
-  res <- maximalModelNumber prog
-  return res
+maximalModelNumber prog = S.optimize S.Lexicographic $
+                          S.maximize "model number (unsigned)" =<< programModel prog
+
+part1 prog = maximalModelNumber prog
 
 answer1 = part1 <$> input
 
 
-minimalModelNumber prog = S.optimize S.Lexicographic $ do
-  let svars = ["inp_" ++ show i | i <- [0 .. 13] ]
-  vars <- mapM S.sInt64 svars
-  let zipped = zip svars vars
-      env = Map.fromList zipped
-  mapM_ (\ inp -> S.constrain $ inp S..> 0 S..&& inp S..< 10) vars
-  let state = interp env initial prog
-      z = regs state ! 'z'
-  S.constrain $ z S..== 0
-  let mnum = modelNo vars
-  modelNoI64 <- S.free "mini_modelNoI64"
-  S.constrain $ modelNoI64 S..== mnum
-  S.minimize "model number" $ mnum
+minimalModelNumber prog = S.optimize S.Lexicographic $
+                          S.minimize "model number (unsigned)" =<< programModel prog
 
-  where
-    modelNo xs = foldl (\n x -> 10*n + x) 0 xs
-    initial = State (Map.fromList [ (r, 0) | r <- ['w'..'z'] ]) 0
-
-part2 prog = do
-  res <- minimalModelNumber prog
-  return res
+part2 prog = minimalModelNumber prog
 
 answer2 = part2 <$> input
 
