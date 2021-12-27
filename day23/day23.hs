@@ -2,13 +2,14 @@
 module Main where
 
 import qualified Data.Set as Set
-import qualified Data.OrdPSQ as Q
+import qualified Data.HashPSQ as Q
 import qualified Data.List as L
 import Data.IntMap.Strict (IntMap, (!?))
 import qualified Data.IntMap.Strict as M
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import Data.Hashable
+--import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as Map
 
 import Data.Maybe (isNothing)
 import Debug.Trace (trace, traceShow)
@@ -26,16 +27,28 @@ topRoom 'B' = 4
 topRoom 'C' = 6
 topRoom 'D' = 8
 
-roomPlaces = [topRoom 'A' .. topRoom 'D' + 1]
-topFor room = room - room `mod` 2
-lowerFor room = room + 1 - room `mod` 2
-depth room = room `mod` 2
+
+-- Room places for 'A' Amphipods are dividable by 5, 'B' places by 7, 'C' places by 11, and 'D' places by 13
+roomPrime room = head [ prime | prime <- [5,7,11,13], room `mod` prime == 0 ]
+
+roomPlaces = [ prime * factor | prime <- [5,7,11,13], factor <- [1..4]]
+
+topFor room = toHallway $ roomPrime room
+
+roomsBelow room = [ room' | f <- [1..4], let room' = f * roomPrime room, room' > room]
+roomsAbove room = [ room' | f <- [1..4], let room' = f * roomPrime room, room' < room]
+
+depth room = room `div` roomPrime room
 
 -- the hallway index of a room, one of the always empty places. Fx room A is under place 2
-toHallway room = topFor room
+toHallway room = case roomPrime room of
+                   5  -> 2
+                   7  -> 4
+                   11 -> 6
+                   13 -> 8
 
 -- distance from a hallway place, hall, to the room place, room.
-distance hallway room = abs(hallway - toHallway room) + 1 + depth room
+distance hallway room = abs(hallway - toHallway room) + depth room
 
 
 type Cost = Int
@@ -49,59 +62,44 @@ data Situation = Sit { rooms :: IntMap Amphipods,
                        hallways :: IntMap Amphipods }
                  deriving (Eq, Ord, Show)
 
+instance Hashable Situation where
+  hashWithSalt s (Sit rooms hallways) = s `hashWithSalt` rooms `hashWithSalt` hallways
 
-test = Sit (M.fromList [ (2, 'B'), (3, 'A')    -- room A
-                       , (4, 'C'), (5, 'D')
-                       , (6, 'B'), (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
+
+test = Sit (M.fromList [ (5, 'B'), (10, 'A')    -- room A
+                       , (7, 'C'), (14, 'D')
+                       , (11, 'B'), (22, 'C')
+                       , (13, 'D'), (26, 'A') ]) -- room D
            M.empty
 
-input = Sit (M.fromList [ (2, 'D'), (3, 'B')    -- room A
-                        , (4, 'D'), (5, 'A')
-                        , (6, 'C'), (7, 'B')
-                        , (8, 'C'), (9, 'A') ]) -- room D
+input = Sit (M.fromList [ (5, 'D'), (10, 'B')    -- room A
+                        , (7, 'D'), (14, 'A')
+                        , (11, 'C'), (22, 'B')
+                        , (13, 'C'), (26, 'A') ]) -- room D
             M.empty
 
 
-end = Sit (M.fromList [ (2, 'A'), (3, 'A')    -- room A
-                      , (4, 'B'), (5, 'B')
-                      , (6, 'C'), (7, 'C')
-                      , (8, 'D'), (9, 'D') ]) -- room D
+end = Sit (M.fromList [ (5, 'A'), (10, 'A')    -- room A
+                      , (7, 'B'), (14, 'B')
+                      , (11, 'C'), (22, 'C')
+                      , (13, 'D'), (26, 'D') ]) -- room D
           M.empty
 
-step1 = Sit (M.fromList [ (2,'B'), (3, 'A')    -- room A
-                       , (4, 'C'), (5, 'D')
-                       , (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
-                   (M.fromList [(3,'B')])
 
-step15 = Sit (M.fromList [ (2,'B'), (3, 'A')    -- room A
-                        , (5, 'D')
-                        , (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
-                   (M.fromList [(3,'B'), (5, 'C')])
+input2 = Sit (M.fromList [ (5, 'D'), (10, 'D'), (15, 'D'), (20, 'B')     -- room A
+                         , (7, 'D'), (14, 'C'), (21, 'B'), (28, 'A')
+                         , (11, 'C'), (22, 'B'), (33, 'A'), (44, 'B')
+                         , (13, 'C'), (26, 'A'), (39, 'C'), (52, 'A') ]) -- room D
+            M.empty
 
 
-step2 = Sit (M.fromList [ (2,'B'), (3, 'A')    -- room A
-                        , (5, 'D')
-                        , (6, 'C'), (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
-                   (M.fromList [(3,'B')])
-
-step3 = Sit (M.fromList [ (2,'B'), (3, 'A')    -- room A
-                        , (5, 'B')
-                        , (6, 'C'), (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
-                   (M.fromList [(5,'D')])
-
-step4 = Sit (M.fromList [ (3, 'A')    -- room A
-                        , (4, 'B'), (5, 'B')
-                        , (6, 'C'), (7, 'C')
-                       , (8, 'D'), (9, 'A') ]) -- room D
-                   (M.fromList [(5,'D')])
+end2 = Sit (M.fromList [ (5, 'A'), (10, 'A'), (15, 'A'), (20, 'A')    -- room A
+                       , (7, 'B'), (14, 'B'), (21, 'B'), (28, 'B')
+                       , (11, 'C'), (22, 'C'), (33, 'C'), (44, 'C')
+                       , (13, 'D'), (26, 'D'), (39, 'D'), (52, 'D') ]) -- room D
+          M.empty
 
 
-step5 = Sit {rooms = M.fromList [(3,'A'), (4, 'B'), (5, 'B'), (6, 'C'), (7, 'C')], hallways = M.fromList [(5,'D'),(7,'D'),(9, 'A')]}
 
 
 passage h1 h2 = [min h1 h2 .. max h1 h2]
@@ -114,7 +112,7 @@ goToHallway (Sit rooms hallways) roomPlace hallway =
   else Nothing
   where
     rooms' = M.delete roomPlace rooms
-    freePassage = (free $ rooms' !? topFor roomPlace)
+    freePassage = (all free $ map ((!?) rooms) $ roomsAbove roomPlace)
                   && (all free $ map ((!?) hallways) (passage (toHallway roomPlace) hallway))
     amp = rooms M.! roomPlace
     moveCost = cost amp * distance hallway roomPlace
@@ -127,11 +125,11 @@ goToRoom (Sit rooms hallways) roomPlace hallway =
   where
     hallways' = M.delete hallway hallways
     freePassage = (free $ rooms !? roomPlace)
-                 && (free $ rooms !? topFor roomPlace)
+                 && (all free $ map ((!?) rooms) $ roomsAbove roomPlace)
                  && okToEnter
                  && (all free $ map ((!?) hallways') (passage (toHallway roomPlace) hallway))
     amp = hallways M.! hallway
-    okToEnter = topFor roomPlace == topRoom amp && all (== amp) (rooms !? lowerFor roomPlace)
+    okToEnter = topFor roomPlace == topRoom amp && (all (all (== amp)) $ map ((!?) rooms) $ roomsBelow roomPlace)
     moveCost = cost amp * distance hallway roomPlace
 
 possibleMoves k sit = [ (k+c, sit') | r <- M.keys $ rooms sit, h <- hallwayPlaces
@@ -185,9 +183,10 @@ part1 input = c
 
 answer1 = part1 $ input
 
-part2 input = res
+part2 input = c
   where
-    res = 42
+    Just(c, _) = shortest_path_faster input2 end2
+
 
 answer2 = part2 $ input
 
