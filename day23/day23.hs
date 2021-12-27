@@ -8,7 +8,6 @@ import Data.IntMap.Strict (IntMap, (!?))
 import qualified Data.IntMap.Strict as M
 
 import Data.Hashable
---import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as Map
 
 import Data.Maybe (isNothing)
@@ -31,12 +30,13 @@ topRoom 'D' = 8
 -- Room places for 'A' Amphipods are dividable by 5, 'B' places by 7, 'C' places by 11, and 'D' places by 13
 roomPrime room = head [ prime | prime <- [5,7,11,13], room `mod` prime == 0 ]
 
-roomPlaces = [ prime * factor | prime <- [5,7,11,13], factor <- [1..4]]
+roomPlaces d = [ prime * factor | prime <- [5,7,11,13], factor <- [1..d]]
 
 topFor room = toHallway $ roomPrime room
 
-roomsBelow room = [ room' | f <- [1..4], let room' = f * roomPrime room, room' > room]
-roomsAbove room = [ room' | f <- [1..4], let room' = f * roomPrime room, room' < room]
+roomsBelow d room = [ room' | f <- [1..d], let room' = f * roomPrime room, room' > room]
+
+roomsAbove d room = [ room' | f <- [1..d], let room' = f * roomPrime room, room' < room]
 
 depth room = room `div` roomPrime room
 
@@ -49,7 +49,6 @@ toHallway room = case roomPrime room of
 
 -- distance from a hallway place, hall, to the room place, room.
 distance hallway room = abs(hallway - toHallway room) + depth room
-
 
 type Cost = Int
 
@@ -100,95 +99,78 @@ end2 = Sit (M.fromList [ (5, 'A'), (10, 'A'), (15, 'A'), (20, 'A')    -- room A
           M.empty
 
 
-
-
 passage h1 h2 = [min h1 h2 .. max h1 h2]
 
 free = isNothing
 
-goToHallway (Sit rooms hallways) roomPlace hallway =
+goToHallway d (Sit rooms hallways) roomPlace hallway =
   if freePassage
-  then Just $ (moveCost, Sit rooms' (M.insert hallway amp hallways))
+  then Just (moveCost, Sit rooms' (M.insert hallway amp hallways))
   else Nothing
   where
     rooms' = M.delete roomPlace rooms
-    freePassage = (all free $ map ((!?) rooms) $ roomsAbove roomPlace)
-                  && (all free $ map ((!?) hallways) (passage (toHallway roomPlace) hallway))
+    freePassage = all (free . (!?) rooms) (roomsAbove d roomPlace)
+                  && all (free . (!?) hallways) (passage (toHallway roomPlace) hallway)
     amp = rooms M.! roomPlace
     moveCost = cost amp * distance hallway roomPlace
 
 
-goToRoom (Sit rooms hallways) roomPlace hallway =
+goToRoom d (Sit rooms hallways) roomPlace hallway =
   if freePassage
-  then Just $ (moveCost, Sit (M.insert roomPlace amp rooms) hallways')
+  then Just (moveCost, Sit (M.insert roomPlace amp rooms) hallways')
   else Nothing
   where
     hallways' = M.delete hallway hallways
-    freePassage = (free $ rooms !? roomPlace)
-                 && (all free $ map ((!?) rooms) $ roomsAbove roomPlace)
+    freePassage = free (rooms !? roomPlace)
+                 && all (free . (!?) rooms) (roomsAbove d roomPlace)
                  && okToEnter
-                 && (all free $ map ((!?) hallways') (passage (toHallway roomPlace) hallway))
+                 && all (free . (!?) hallways') (passage (toHallway roomPlace) hallway)
     amp = hallways M.! hallway
-    okToEnter = topFor roomPlace == topRoom amp && (all (all (== amp)) $ map ((!?) rooms) $ roomsBelow roomPlace)
+    okToEnter = topFor roomPlace == topRoom amp && all (all (== amp) . (!?) rooms) (roomsBelow d roomPlace)
     moveCost = cost amp * distance hallway roomPlace
 
-possibleMoves k sit = [ (k+c, sit') | r <- M.keys $ rooms sit, h <- hallwayPlaces
-                                    , Just (c, sit') <- [goToHallway sit r h] ] ++
-                      [ (k+c, sit') | h <- M.keys $ hallways sit, r <- roomPlaces
-                                    , Just (c, sit') <- [goToRoom sit r h] ]
+possibleMoves d k sit = [ (k+c, sit') | r <- M.keys $ rooms sit, h <- hallwayPlaces
+                                      , Just (c, sit') <- [goToHallway d sit r h] ] ++
+                        [ (k+c, sit') | h <- M.keys $ hallways sit, r <- roomPlaces d
+                                      , Just (c, sit') <- [goToRoom d sit r h] ]
 
-
-update sit c queue = snd $ Q.alter upsert sit queue
+shortestPathFaster d start goal = loop Map.empty (Q.singleton start 0 ())
   where
-    upsert Nothing = ((), Just(c, c))
-    upsert (Just(c', _)) = ((), Just(mc, mc))
-      where mc = min c c'
 
-
-step visited k queue =
-  case Q.minView queue of
-    Nothing -> Nothing
-    Just (sit, c, _, queue')
-      | sit `Set.member` visited -> Just (sit, visited, k, queue')
-      | otherwise                -> Just (sit, visited', k, queue'')
+    update sit c queue = snd $ Q.alter upsert sit queue
       where
-        visited' = Set.insert sit visited
-        moves = possibleMoves k sit
-        queue'' = L.foldr (\(kc, sit') q -> update sit' kc q) queue' moves
-
-steps start = go (step Set.empty 0 (Q.singleton start 0 0))
-  where go Nothing = []
-        go (Just e@(s1, v1, k1, q1)) = e : go(step v1 k1 q1)
+        upsert Nothing = ((), Just(c, ()))
+        upsert (Just(c', _)) = ((), Just(min c c', ()))
 
 
-shortest_path_faster start goal = loop Map.empty (Q.singleton start 0 0)
-  where
     loop visited queue =
       case Q.minView queue of
         Nothing -> Nothing
         Just (sit, c, _, queue')
-          | sit == goal              -> Just $ (c,sit)
-          | Just c' <- visited Map.!? sit, c' <= c -> loop visited queue'
+          | sit == goal              -> Just c
           | otherwise                -> loop visited' queue''
           where
             visited' = Map.insert sit c visited
-            moves = possibleMoves c sit
-            queue'' = L.foldr (\(kc, sit') q -> update sit' kc q) queue' moves
+            moves = possibleMoves d c sit
+            queue'' = L.foldr (\(kc, sit') q -> case visited' Map.!? sit' of
+                                                  Just c' | c' <= kc -> q
+                                                  _ -> update sit' kc q)
+                              queue' moves
 
 
 
 part1 input = c
   where
-    Just(c, _) = shortest_path_faster input end
+    Just c = shortestPathFaster 2 input end
 
-answer1 = part1 $ input
+answer1 = part1 input
 
 part2 input = c
   where
-    Just(c, _) = shortest_path_faster input2 end2
+    Just c = shortestPathFaster 4 input2 end2
 
 
-answer2 = part2 $ input
+answer2 = part2 input
 
 main = do
   let inp = input
