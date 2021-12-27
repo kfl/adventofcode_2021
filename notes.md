@@ -284,6 +284,10 @@ Part 2: Arg, the changes in the task description requires a major
 refactoring. I should not have been so clever with the representation
 of hallway and room places.
 
+Part 2, solved after the 24 hour keeping-pace window. No fundamental
+changes to the approach, just needed a better representation of room
+places. Made part 1 run 5 times faster.
+
 
 Day 24
 ------
