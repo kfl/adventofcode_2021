@@ -297,4 +297,8 @@ NICE-TO-HAVE: Clean up the code a bit, it should be possible to share
 code between `maximalModelNumber` and `minimalModelNumber`.
 
 
+Day 25
+------
+
+Haskell, solved part 1 by using two sets, one for each herd. No Part 2.
 
