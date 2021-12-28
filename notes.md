@@ -262,8 +262,9 @@ need to subtract.
 
 Made two versions of part2, one using multi-sets and one using
 lists. This was done to profile the benefit/overhead of using
-multi-sets over lists. There is a small benefit of using, but not a
-lot when compiling the program (in ghci it's still a factor ~7).
+multi-sets over lists. There is a small benefit of using multi-sets,
+but not a lot when compiling the program (in ghci it's still a factor
+~7).
 
 NICE-TO-HAVE: This should be able to be done in a data parallel
 manner. Could be fun to do a version in Rust.
