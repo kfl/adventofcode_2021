@@ -30,8 +30,8 @@ main :: IO ()
 main = defaultMain
   [env setupEnv $ \ grid ->
     bgroup "Grid search"
-    [ bench "bfs"      $ nf bfsWrap grid
+    [ bench "Dijkstra" $ nf dijkstraWrap grid
     , bench "A*"       $ nf aStarWrap grid
-    , bench "Dijkstra" $ nf dijkstraWrap grid
+    , bench "bfs"      $ nf bfsWrap grid
     ]
   ]
