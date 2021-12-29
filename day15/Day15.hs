@@ -1,5 +1,4 @@
-
-module Main where
+module Day15 where
 
 import Control.Monad (forM_)
 import qualified Data.Char as C
@@ -16,17 +15,17 @@ import qualified Data.Array.Unboxed as A
 import Data.Array.Unboxed ((!))
 
 
-test = map parse $ [ "1163751742"
-                   , "1381373672"
-                   , "2136511328"
-                   , "3694931569"
-                   , "7463417111"
-                   , "1319128137"
-                   , "1359912421"
-                   , "3125421639"
-                   , "1293138521"
-                   , "2311944581"
-                   ]
+test = map parse [ "1163751742"
+                 , "1381373672"
+                 , "2136511328"
+                 , "3694931569"
+                 , "7463417111"
+                 , "1319128137"
+                 , "1359912421"
+                 , "3125421639"
+                 , "1293138521"
+                 , "2311944581"
+                 ]
 
 input = map parse . lines <$> readFile "input.txt"
 
@@ -106,7 +105,40 @@ part2 input = res
 
 answer2 = part2 <$> input
 
-main = do
-  inp <- input
-  print $ part1 inp
-  print $ part2 inp
+manhattan (a,b) (x,y) = abs(a-x) + abs(b-y)
+
+aStar start grid goal = loop startFrontier initPathCost
+  where
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
+
+    update n c queue = snd $ Q.alter upsert n queue
+      where
+        upsert Nothing = ((), Just(c, ()))
+        upsert (Just(c', _)) = ((), Just(min c c', ()))
+
+    startFrontier = Q.singleton start 0 ()
+    initPathCost = IntMap.singleton (index start) 0
+    heuristic n = manhattan n goal
+    stepCost n = grid ! n
+
+    loop frontier pathCost =
+      case Q.minView frontier of
+        Nothing -> Nothing
+        Just(s, _, _, frontier')
+          | s == goal -> pathCost !? s
+          | otherwise -> loop frontier'' pathCost'
+          where
+            Just ps = pathCost !? s
+            relevant = [ (n, cc) | n <- neighbours grid s, let cc = ps + stepCost n, cc `less` (pathCost !? n) ]
+            frontier'' = L.foldr (\(n, cc) front -> update n (cc + heuristic n) front) frontier' relevant
+            pathCost' = IntMap.fromList [(index n, cc) | (n, cc) <- relevant] `IntMap.union` pathCost
+
+part2' :: [[Int]] -> Int
+part2' input = res
+  where
+    grid = bigger $ mkGrid input
+    (_, end) = A.bounds grid
+    Just res = aStar (0,0) grid end
+
+

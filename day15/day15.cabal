@@ -9,13 +9,32 @@ maintainer:         ken@friislarsen.net
 
 copyright: Ken Friis Larsen <ken@friislarsen.net>
 
-executable day15
-    main-is: day15.hs
+common deps
     build-depends:    array
                     , base ^>=4.14.3.0
                     , containers
                     , psqueues
                     , split
 
-    hs-source-dirs:   .
+library
+    import: deps
+    exposed-modules: Day15
+    default-language: Haskell2010
+
+executable day15
+    import: deps
+    main-is: Main.hs
+    other-modules: Day15
+    build-depends: day15
+    default-language: Haskell2010
+
+
+benchmark bench-day15
+    import: deps
+    main-is:       BenchDay15.hs
+    type:          exitcode-stdio-1.0
+    other-modules: Day15
+    build-depends: day15
+                 , tasty-bench
+    ghc-options:  "-with-rtsopts=-A32m"
     default-language: Haskell2010

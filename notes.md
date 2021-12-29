@@ -196,10 +196,14 @@ networks problem. Interesting properties that may be exploited: We'll
 only need to visit a place once, all costs are positive (and small). A
 straightforward BFS should solve part 1, but an A* could also be fun.
 
-Plain Haskell, simple BFS could solves both part, but is rather slow.
+Plain Haskell, simple BFS solves both part, but is rather slow.
 
 NICE TO HAVE: Proper implementation of, say, Dijkstra's algorithm for
 single-source shortest-paths.
+
+Post event: Added functional implementation of A*, this brings us
+under 1s for both tasks, which is acceptable.
+
 
 
 Day 16
