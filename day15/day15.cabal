@@ -15,17 +15,16 @@ common deps
                     , containers
                     , psqueues
                     , split
+    default-language: Haskell2010
 
 library
     import: deps
     exposed-modules: Day15
-    default-language: Haskell2010
 
 executable day15
     import: deps
     main-is: Main.hs
     other-modules: Day15
-    default-language: Haskell2010
 
 
 benchmark bench-day15
@@ -35,4 +34,3 @@ benchmark bench-day15
     other-modules: Day15
     build-depends: tasty-bench
     ghc-options:  "-with-rtsopts=-A32m"
-    default-language: Haskell2010
