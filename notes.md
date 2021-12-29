@@ -201,8 +201,10 @@ Plain Haskell, simple BFS solves both part, but is rather slow.
 NICE TO HAVE: Proper implementation of, say, Dijkstra's algorithm for
 single-source shortest-paths.
 
-Post event: Added functional implementation of A*, this brings us
-under 1s for both tasks, which is acceptable.
+Post event: Added functional implementations of Dijkstra's shortest
+path algorithm and A* (using Manhattan distance as heuristic
+function). Using either brings us under 1s for both tasks, which is
+acceptable. Surprisingly, Dijkstra's algorithm is faster than A*.
 
 
 
