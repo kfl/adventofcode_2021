@@ -105,17 +105,19 @@ part2 input = res
 
 answer2 = part2 <$> input
 
+update n c queue = snd $ Q.alter upsert n queue
+  where
+    upsert Nothing = ((), Just(c, ()))
+    upsert (Just(c', _)) = ((), Just(min c c', ()))
+
+manhattan :: (Int, Int) -> (Int, Int) -> Int
 manhattan (a,b) (x,y) = abs(a-x) + abs(b-y)
 
+aStar :: (Int, Int) -> Grid -> (Int, Int) -> Maybe Int
 aStar start grid goal = loop startFrontier initPathCost
   where
     index idx = A.bounds grid `A.index` idx
     m !? idx = IntMap.lookup (index idx) m
-
-    update n c queue = snd $ Q.alter upsert n queue
-      where
-        upsert Nothing = ((), Just(c, ()))
-        upsert (Just(c', _)) = ((), Just(min c c', ()))
 
     startFrontier = Q.singleton start 0 ()
     initPathCost = IntMap.singleton (index start) 0
@@ -134,11 +136,31 @@ aStar start grid goal = loop startFrontier initPathCost
             frontier'' = L.foldr (\(n, cc) front -> update n (cc + heuristic n) front) frontier' relevant
             pathCost' = IntMap.fromList [(index n, cc) | (n, cc) <- relevant] `IntMap.union` pathCost
 
+dijkstra :: (Int, Int) -> Grid -> (Int, Int) -> Maybe Int
+dijkstra start grid goal = loop startFrontier initPathCost
+  where
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
+
+    startFrontier = Q.singleton start 0 ()
+    initPathCost = IntMap.singleton (index start) 0
+    stepCost n = grid ! n
+
+    loop frontier pathCost =
+      case Q.minView frontier of
+        Nothing -> Nothing
+        Just(s, c, _, frontier')
+          | s == goal -> Just c
+          | otherwise -> loop frontier'' pathCost'
+          where
+            relevant = [ (n, cc) | n <- neighbours grid s, let cc = c + stepCost n, cc `less` (pathCost !? n) ]
+            frontier'' = L.foldr (\(n, cc) front -> update n cc front) frontier' relevant
+            pathCost' = IntMap.fromList [(index n, cc) | (n, cc) <- relevant] `IntMap.union` pathCost
+
+
 part2' :: [[Int]] -> Int
 part2' input = res
   where
     grid = bigger $ mkGrid input
     (_, end) = A.bounds grid
-    Just res = aStar (0,0) grid end
-
-
+    Just res = dijkstra (0,0) grid end
