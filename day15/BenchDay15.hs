@@ -25,12 +25,18 @@ dijkstraWrap grid = res
     (_, end) = A.bounds grid
     Just res = dijkstra (0,0) grid end
 
+dijkstraSetWrap grid = res
+  where
+    (_, end) = A.bounds grid
+    Just res = dijkstra' (0,0) grid end
+
 
 main :: IO ()
 main = defaultMain
   [env setupEnv $ \ grid ->
     bgroup "Grid search"
     [ bench "Dijkstra" $ nf dijkstraWrap grid
+    , bench "Dijkstra (set based) " $ nf dijkstraSetWrap grid
     , bench "A*"       $ nf aStarWrap grid
     , bench "bfs"      $ nf bfsWrap grid
     ]

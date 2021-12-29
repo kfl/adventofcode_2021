@@ -204,7 +204,10 @@ single-source shortest-paths.
 Post event: Added functional implementations of Dijkstra's shortest
 path algorithm and A* (using Manhattan distance as heuristic
 function). Using either brings us under 1s for both tasks, which is
-acceptable. Surprisingly, Dijkstra's algorithm is faster than A*.
+acceptable. Surprisingly, Dijkstra's algorithm is faster than
+A*. Another surprise is that it seems to be slightly faster to use
+`Set` (from the `containers` package) rather than a priority queue
+(from the `psqueues` package) for Dijkstra algorithm.
 
 
 

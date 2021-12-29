@@ -157,10 +157,32 @@ dijkstra start grid goal = loop startFrontier initPathCost
             frontier'' = L.foldr (\(n, cc) front -> update n cc front) frontier' relevant
             pathCost' = IntMap.fromList [(index n, cc) | (n, cc) <- relevant] `IntMap.union` pathCost
 
+dijkstra' :: (Int, Int) -> Grid -> (Int, Int) -> Maybe Int
+dijkstra' start grid goal = loop startFrontier initPathCost
+  where
+    index idx = A.bounds grid `A.index` idx
+    m !? idx = IntMap.lookup (index idx) m
+
+    startFrontier = Set.singleton(0, start)
+    initPathCost = IntMap.singleton (index start) 0
+    stepCost n = grid ! n
+
+    loop frontier pathCost =
+      case Set.minView frontier of
+        Nothing -> Nothing
+        Just((c,s), frontier')
+          | s == goal -> Just c
+          | otherwise -> loop frontier'' pathCost'
+          where
+            relevant = [ (cc, n) | n <- neighbours grid s, let cc = c + stepCost n, cc `less` (pathCost !? n) ]
+            frontier'' = frontier' `Set.union` Set.fromList relevant
+            pathCost' = IntMap.fromList [(index n, cc) | (cc, n) <- relevant] `IntMap.union` pathCost
+
+
 
 part2' :: [[Int]] -> Int
 part2' input = res
   where
     grid = bigger $ mkGrid input
     (_, end) = A.bounds grid
-    Just res = dijkstra (0,0) grid end
+    Just res = dijkstra' (0,0) grid end
