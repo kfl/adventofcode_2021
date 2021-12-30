@@ -1,4 +1,3 @@
-module Day18
 
 let readLines filePath = System.IO.File.ReadLines filePath
 
