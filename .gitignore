@@ -2,3 +2,6 @@ target/
 Cargo.lock
 dist-newstyle/
 newdist/
+*.prof
+*.exe
+*.dll
