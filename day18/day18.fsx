@@ -103,21 +103,21 @@ let rec magnitude = function
     | Pair (p1, p2) -> 3 * magnitude p1 + 2 * magnitude p2
 
 let part1 input =
-    List.fold add (List.head input) (List.tail input)
+    List.reduce add input
     |> magnitude
 
 let answer1 = part1 input
 
-let rec combinations ns =
-    match ns with
-        | [] -> Seq.empty
-        | n1 :: rest -> seq { for n2 in rest do yield n1, n2
-                              yield! combinations rest }
+let rec combinations = function
+    | [] -> Seq.empty
+    | n1 :: rest -> seq { for n2 in rest do
+                             yield n1, n2
+                             yield n2, n1
+                          yield! combinations rest }
 
 let part2 input =
-    seq { for (x,y) in combinations input do
-            yield add x y
-            yield add y x }
+    combinations input
+    |> Seq.map (fun(n1, n2) -> add n1 n2)
     |> Seq.map magnitude
     |> Seq.max
 
