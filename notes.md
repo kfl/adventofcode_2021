@@ -23,8 +23,8 @@ NICE TO HAVE: Make a Haskell version.
 Day 2
 -----
 
-Attempted to make a data parallel version, but could come up with the
-right monoid.
+Attempted to make a data parallel version, but could not come up with
+the right monoid.
 
 Wrote some nice QuickCheck.
 
@@ -74,8 +74,8 @@ Dang, undergrad math is far away. Remembered that median could be used
 for part 1 (a similar question was on my exam back then, something
 something about linearity and optimality).
 
-Couldn't math out the answer to part 2, and decided to make $O(n^2)$
-algorithm just to finish.
+Couldn't math out the answer to part 2, and decided to implement an
+$O(n^2)$ algorithm just to finish.
 
 NICE TO HAVE: Clean up code.
 
@@ -247,6 +247,10 @@ specific piece of the task description. At first I tied to do both
 hard to give priority to `explodeAt` over `splits`, for instance there
 might a split which is more to the left than an explode, in which case
 we still have to take the explode over the split. Fun times.
+
+Post event: Implemented an alternative solution based on a flat
+data-structure. The `Seq` datatype in Haskell is quite nice for this
+implementation. Also added an F# implementation.
 
 
 Day 22
