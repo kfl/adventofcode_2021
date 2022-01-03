@@ -12,8 +12,14 @@ import qualified Data.HashMap.Strict as Map
 
 import Data.Maybe (isNothing)
 import Debug.Trace (trace, traceShow)
+import Data.Monoid
 
-type Amphipods = Char
+data Amphipods = A | B | C | D
+  deriving (Eq, Enum, Ord, Bounded, Show)
+
+instance Hashable Amphipods where
+  hashWithSalt = hashUsing fromEnum
+  hash = fromEnum
 
 type Hallway = Int
 hallwayPlaces = [0 .. 10] L.\\ [2,4,6,8]
@@ -21,13 +27,17 @@ hallwayPlaces = [0 .. 10] L.\\ [2,4,6,8]
 type Room = Int
 
 -- index of the top place in a room, lower place in the room is +1
-topRoom 'A' = 2
-topRoom 'B' = 4
-topRoom 'C' = 6
-topRoom 'D' = 8
+topRoom A = 2
+topRoom B = 4
+topRoom C = 6
+topRoom D = 8
 
+ampPrime A = 5
+ampPrime B = 7
+ampPrime C = 11
+ampPrime D = 13
 
--- Room places for 'A' Amphipods are dividable by 5, 'B' places by 7, 'C' places by 11, and 'D' places by 13
+-- Room places for A Amphipods are dividable by 5, B places by 7, C places by 11, and D places by 13
 roomPrime room = head [ prime | prime <- [5,7,11,13], room `mod` prime == 0 ]
 
 roomPlaces d = [ prime * factor | prime <- [5,7,11,13], factor <- [1..d]]
@@ -52,10 +62,10 @@ distance hallway room = abs(hallway - toHallway room) + depth room
 
 type Cost = Int
 
-cost 'A' = 1
-cost 'B' = 10
-cost 'C' = 100
-cost 'D' = 1000
+cost A = 1
+cost B = 10
+cost C = 100
+cost D = 1000
 
 data Situation = Sit { rooms :: IntMap Amphipods,
                        hallways :: IntMap Amphipods }
@@ -65,37 +75,37 @@ instance Hashable Situation where
   hashWithSalt s (Sit rooms hallways) = s `hashWithSalt` rooms `hashWithSalt` hallways
 
 
-test = Sit (M.fromList [ (5, 'B'), (10, 'A')    -- room A
-                       , (7, 'C'), (14, 'D')
-                       , (11, 'B'), (22, 'C')
-                       , (13, 'D'), (26, 'A') ]) -- room D
+test = Sit (M.fromList [ (5, B), (10, A)    -- room A
+                       , (7, C), (14, D)
+                       , (11, B), (22, C)
+                       , (13, D), (26, A) ]) -- room D
            M.empty
 
-input = Sit (M.fromList [ (5, 'D'), (10, 'B')    -- room A
-                        , (7, 'D'), (14, 'A')
-                        , (11, 'C'), (22, 'B')
-                        , (13, 'C'), (26, 'A') ]) -- room D
+input = Sit (M.fromList [ (5, D), (10, B)    -- room A
+                        , (7, D), (14, A)
+                        , (11, C), (22, B)
+                        , (13, C), (26, A) ]) -- room D
             M.empty
 
 
-end = Sit (M.fromList [ (5, 'A'), (10, 'A')    -- room A
-                      , (7, 'B'), (14, 'B')
-                      , (11, 'C'), (22, 'C')
-                      , (13, 'D'), (26, 'D') ]) -- room D
+end = Sit (M.fromList [ (5, A), (10, A)    -- room A
+                      , (7, B), (14, B)
+                      , (11, C), (22, C)
+                      , (13, D), (26, D) ]) -- room D
           M.empty
 
 
-input2 = Sit (M.fromList [ (5, 'D'), (10, 'D'), (15, 'D'), (20, 'B')     -- room A
-                         , (7, 'D'), (14, 'C'), (21, 'B'), (28, 'A')
-                         , (11, 'C'), (22, 'B'), (33, 'A'), (44, 'B')
-                         , (13, 'C'), (26, 'A'), (39, 'C'), (52, 'A') ]) -- room D
+input2 = Sit (M.fromList [ (5, D), (10, D), (15, D), (20, B)     -- room A
+                         , (7, D), (14, C), (21, B), (28, A)
+                         , (11, C), (22, B), (33, A), (44, B)
+                         , (13, C), (26, A), (39, C), (52, A) ]) -- room D
             M.empty
 
 
-end2 = Sit (M.fromList [ (5, 'A'), (10, 'A'), (15, 'A'), (20, 'A')    -- room A
-                       , (7, 'B'), (14, 'B'), (21, 'B'), (28, 'B')
-                       , (11, 'C'), (22, 'C'), (33, 'C'), (44, 'C')
-                       , (13, 'D'), (26, 'D'), (39, 'D'), (52, 'D') ]) -- room D
+end2 = Sit (M.fromList [ (5, A), (10, A), (15, A), (20, A)    -- room A
+                       , (7, B), (14, B), (21, B), (28, B)
+                       , (11, C), (22, C), (33, C), (44, C)
+                       , (13, D), (26, D), (39, D), (52, D) ]) -- room D
           M.empty
 
 
@@ -134,14 +144,21 @@ possibleMoves d k sit = [ (k+c, sit') | r <- M.keys $ rooms sit, h <- hallwayPla
                         [ (k+c, sit') | h <- M.keys $ hallways sit, r <- roomPlaces d
                                       , Just (c, sit') <- [goToRoom d sit r h] ]
 
+
+type CostQueue = Q.HashPSQ Situation Cost ()
+
+update :: Situation -> Cost -> CostQueue -> CostQueue
+update sit c queue = snd $ Q.alter upsert sit queue
+  where
+    upsert Nothing = ((), Just(c, ()))
+    upsert (Just(c', _)) = ((), Just(min c c', ()))
+
+less :: Cost -> Maybe Cost -> Bool
+x `less` may = maybe True (x <) may
+
+
 shortestPathFaster d start goal = loop Map.empty (Q.singleton start 0 ())
   where
-
-    update sit c queue = snd $ Q.alter upsert sit queue
-      where
-        upsert Nothing = ((), Just(c, ()))
-        upsert (Just(c', _)) = ((), Just(min c c', ()))
-
 
     loop visited queue =
       case Q.minView queue of
@@ -157,17 +174,43 @@ shortestPathFaster d start goal = loop Map.empty (Q.singleton start 0 ())
                                                   _ -> update sit' kc q)
                               queue' moves
 
+aStar d start goal = loop startFrontier initPathCost
+  where
+
+    startFrontier = Q.singleton start 0 ()
+    initPathCost = Map.singleton start 0
+    heuristic (Sit rooms hallways) = getSum hallwayCost + getSum roomCost
+      where
+        hallwayCost =
+          M.foldMapWithKey (\h amp -> Sum $ cost amp * distance h (ampPrime amp)) hallways
+        roomCost =
+          M.foldMapWithKey (\r amp -> Sum $ cost amp * distance (topFor r) (ampPrime amp)) rooms
+
+    loop frontier pathCost =
+      case Q.minView frontier of
+        Nothing -> Nothing
+        Just(sit, _, _, frontier')
+          | sit == goal -> pathCost Map.!? sit
+          | otherwise -> loop frontier'' pathCost'
+          where
+            Just pc = pathCost Map.!? sit
+            moves = possibleMoves d pc sit
+
+            relevant = [ (sit', kc) | (kc, sit') <- moves, kc `less` (pathCost Map.!? sit') ]
+            frontier'' = L.foldr (\(n, cc) front -> update n (cc + heuristic n) front) frontier' relevant
+            pathCost' = Map.fromList relevant `Map.union` pathCost
+
 
 
 part1 input = c
   where
-    Just c = shortestPathFaster 2 input end
+    Just c = aStar 2 input end
 
 answer1 = part1 input
 
 part2 input = c
   where
-    Just c = shortestPathFaster 4 input2 end2
+    Just c = aStar 4 input2 end2
 
 
 answer2 = part2 input
