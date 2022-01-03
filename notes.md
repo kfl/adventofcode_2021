@@ -302,6 +302,8 @@ Part 2, solved after the 24 hour keeping-pace window. No fundamental
 changes to the approach, just needed a better representation of room
 places. Made part 1 run 5 times faster.
 
+Post event: Added A* implementation, this gave a speedup of 3.
+
 
 Day 24
 ------
