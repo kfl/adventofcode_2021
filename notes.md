@@ -267,8 +267,9 @@ crucial to have a border (that represents the infinite amount of
 pixels that starts by being off). Thanks to Mads Obitsø Thomsen for
 helping me understand this.
 
-First time I've really used that Haskell's doesn't need to be
-zero-indexed.
+First time I've really used that Haskell's arrays doesn't need to be
+zero-indexed. In my solution I end up with an array that's -51-indexed
+:exploding_head:.
 
 
 Day 21
