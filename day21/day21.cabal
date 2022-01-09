@@ -12,7 +12,7 @@ copyright: Ken Friis Larsen <ken@friislarsen.net>
 executable day21
     main-is: day21.hs
     build-depends:    base ^>=4.14.3.0,
-                      memoize
+                      multiset
 
 
     hs-source-dirs:   .

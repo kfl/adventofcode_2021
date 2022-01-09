@@ -1,8 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
 import qualified Data.List as L
-import qualified Data.Function.Memoize as M
+import Data.MultiSet (MultiSet)
+import qualified Data.MultiSet as MS
 import Data.Bifunctor
 import Data.Maybe (fromJust)
 import Data.Tuple (swap)
@@ -38,47 +40,42 @@ answer1 = part1 input
 
 data Tree = Tree Player Player [(Int, Tree)]
 
-sum' xs = L.foldl' (+) 0 xs
+sum' :: [Int] -> Int
+sum' = L.foldl' (+) 0
 
-instance M.Memoizable Player where
-  memoize f (Player s p) = M.memoize (f . inj) (s, p)
-    where
-      inj (s, p) = Player s p
-
-
+allRolls :: [(Int, Int)]
+allRolls = [ (roll, n)
+           | group <- L.group $ L.sort [ sum [r1,r2,r3]
+                                       | r1 <- [1,2,3], r2 <- [1,2,3], r3 <- [1,2,3] ]
+           , let (roll, n) = (head group, length group) ]
 
 tree :: (Player, Player) -> Tree
-tree (p1, p2) =
-  let allRolls = [ sum [r1,r2,r3] | r1 <- [1,2,3], r2 <- [1,2,3], r3 <- [1,2,3] ]
-      children = [ (n, tree (p2, p1')) | group <- L.group $ L.sort allRolls,
-                   let (roll, n) = (head group, fromIntegral $ length group)
-                       newPlace = (place p1 + roll - 1) `mod` 10 + 1
-                       p1' = Player (score p1 + newPlace) newPlace ]
-  in Tree p1 p2 children
+tree (p1, p2) = Tree p1 p2 children
+  where
+    children = [ (n, tree (p2, p1')) | (roll, n) <- allRolls,
+                 let newPlace = (place p1 + roll - 1) `mod` 10 + 1
+                     p1' = Player (score p1 + newPlace) newPlace ]
 
-countWins (Tree p1 p2 children) =
-  let (p1Wins, p2Wins) = if score p1 >= 21 then (1, 0)
-                         else if score p2 >= 21 then (0, 1)
-                         else bimap sum' sum' $ unzip [ (n * p1w, n*p2w)
-                                                      | (n, c) <- children
-                                                      , let (p2w, p1w) = countWins c]
-  in (p1Wins, p2Wins)
+
+countWins (Tree p1 p2 children)
+  | score p1 >= 21 = (1, 0)
+  | score p2 >= 21 = (0, 1)
+  | otherwise      = bimap sum' sum'
+                     $ unzip [ (n * p1w, n * p2w)
+                             | (n, c) <- children, let (p2w, p1w) = countWins c]
 
 
 count :: (Player, Player) -> (Int, Int)
-count (p1, p2) =
-  let allRolls = [ sum [r1,r2,r3] | r1 <- [1,2,3], r2 <- [1,2,3], r3 <- [1,2,3] ]
-      children = [ (p1Wins, p2Wins) | group <- L.group $ L.sort allRolls,
-                   let (roll, n) = (head group, length group)
-                       newPlace = (place p1 + roll - 1) `mod` 10 + 1
+count (p1, p2) = bimap sum' sum' $ unzip children
+  where
+    children = [ (p1Wins, p2Wins) | (roll, n) <- allRolls,
+                   let newPlace = (place p1 + roll - 1) `mod` 10 + 1
                        newScore = score p1 + newPlace
                        p1' = Player newScore newPlace
                        (p1Wins, p2Wins) = if newScore >= 21 then (n, 0)
                                           else bimap (*n) (*n) $
                                                swap $
                                                count (p2, p1')]
-  in bimap sum' sum' $ unzip children
-
 
 
 part2 (p1, p2, _, _) = max p1w p2w
@@ -88,7 +85,49 @@ part2 (p1, p2, _, _) = max p1w p2w
 
 answer2 = part2 input
 
+
+-- Alternative strategy. We move universes forward in lockstep one
+-- turn at a time. We use a multi-set to represent all universes
+-- because we ultimately want to count the number of universes that
+-- each player won.
+
+data PlayerID = Player1 | Player2
+              deriving (Eq, Ord, Show)
+data AltPlayer = AltPlayer { who :: PlayerID, ascore :: !Int, aplace :: !Int }
+               deriving (Show, Ord, Eq)
+data GameState = Won PlayerID
+               | Ongoing AltPlayer AltPlayer
+               deriving (Show, Ord, Eq)
+
+multicount :: AltPlayer -> AltPlayer -> (Int, Int)
+multicount p1 p2 = (wins $ who p1, wins $ who p2)
+  where
+
+    turn (Ongoing p1 p2) =
+      MS.fromOccurList $ [ if newScore >= 21 then (Won $ who p1, n)
+                           else (Ongoing p2 p1', n)
+                         | (roll, n) <- allRolls
+                         , let newPlace = (aplace p1 + roll - 1) `mod` 10 + 1
+                               newScore = ascore p1 + newPlace
+                               p1' = p1{ ascore = newScore, aplace = newPlace } ]
+    turn gs = MS.singleton gs
+
+    universeTurn universes = MS.unionsMap turn universes
+
+    universes = iterate universeTurn (MS.singleton $ Ongoing p1 p2)
+    Just resolved = L.find (all (\case Won _ -> True; _ -> False)) universes
+    wins p = MS.occur (Won p) resolved
+
+
+part2' (p1, p2, _, _) = max p1w p2w
+  where
+    (p1w, p2w) = multicount (AltPlayer Player1 (score p1) (place p1))
+                            (AltPlayer Player2 (score p2) (place p2))
+
+
+
 main = do
   let inp = input
-  print $ part1 inp
-  print $ part2 inp
+  putStrLn $ concat ["Part 1 answer: ", show $ part1 inp, " (expected 757770)"]
+  putStrLn $ concat ["Part 2 answer: ", show $ part2' inp, " (expected 712381680443927)"]
+--  print $ part2 inp
