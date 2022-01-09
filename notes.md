@@ -253,6 +253,24 @@ data-structure. The `Seq` datatype in Haskell is quite nice for this
 implementation. Also added an F# implementation.
 
 
+Day 19
+------
+
+Solved in Haskell. Too slow.
+
+
+Day 20
+------
+
+Solved in Haskell. Started by not realising that in this task it
+crucial to have a border (that represents the infinite amount of
+pixels that starts by being off). Thanks to Mads Obitsø Thomsen for
+helping me understand this.
+
+First time I've really used that Haskell's doesn't need to be
+zero-indexed.
+
+
 Day 21
 ------
 
