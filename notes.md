@@ -253,6 +253,17 @@ data-structure. The `Seq` datatype in Haskell is quite nice for this
 implementation. Also added an F# implementation.
 
 
+Day 21
+------
+
+Solved in Haskell using straightforward slow strategy.
+
+Post event: Implemented an alternative solution based on move all
+universes forward lockstep, and use a multi-set to keep track of all
+universes. This strategy allows us to collapse universes that will
+result in the same timeline.
+
+
 Day 22
 ------
 
