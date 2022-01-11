@@ -11,6 +11,8 @@ import qualified Data.SBV as S
 import Data.SBV ( (.>), (.<), (.==), (.&&) )
 
 import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector.Unboxed.Mutable as MV
+
 import Debug.Trace
 
 
@@ -119,6 +121,18 @@ answer2 = part2 <$> input
 
 -- Alternative (slower) brute-force strategy
 
+newtype MinMap = MinMap (Map (Int, Int, Int, Int) Int) deriving (Eq, Show)
+
+unMinMap f (MinMap m) = f m
+
+instance Semigroup MinMap where
+    (MinMap m1) <> (MinMap m2) = MinMap $ Map.unionWith min m1 m2
+
+instance Monoid MinMap where
+    mempty  = MinMap Map.empty
+    mconcat ms = MinMap $ Map.unionsWith min [ m | MinMap m <- ms]
+
+
 ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
                loop initialStates prog
   where
@@ -139,13 +153,17 @@ ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs =
     report rest states = concat ["Executing line: ", show $ lineno rest
                                 , " (keeping track of ", show $ V.length states, " states)"]
 
+
+    mapInPlaceM f vec = MV.imapM_ (\ !i x -> MV.write vec i (f x)) vec
+
     loop states [] = states
     loop states (inst : rest) = --trace (report rest states) $
                                 loop states' rest
       where
         states' =
           case inst of
-            Acc opr r1 rc -> V.map (\(regs, modelno) -> (update regs, modelno)) states
+            Acc opr r1 rc ->
+              V.modify (mapInPlaceM (\(regs, modelno) -> (update regs, modelno))) states
               where
                 update regs = let e1 = lookup r1 regs
                                   e2 = case rc of
@@ -158,11 +176,10 @@ ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs =
                                           Mod -> rem
                                           Eql -> \e1 e2 -> if e1 == e2 then 1 else 0
                               in set r1 (fun e1 e2) regs
-            Inp r -> V.fromList . Map.toList $ V.foldl' unionStates Map.empty states
+            Inp r -> V.fromList . unMinMap Map.toList $ V.foldMap' expand states
               where
-                unionStates acc (regs, modelno) = Map.unionWith min acc (update regs modelno)
-                update regs modelno =
-                  Map.fromList [ (set r v regs, modelno * 10 + v) | v <- [1..9]]
+                expand (regs, modelno) =
+                  MinMap $ Map.fromList [ (set r v regs, modelno * 10 + v) | v <- [1..9]]
 
 part2' prog = final
   where
