@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BangPatterns, LambdaCase #-}
 
 module Main where
 
@@ -8,10 +8,14 @@ import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map, (!))
 import Text.ParserCombinators.ReadP
 import qualified Data.SBV as S
+import Data.SBV ( (.>), (.<), (.==), (.&&) )
+
+import qualified Data.Vector.Unboxed as V
+import Debug.Trace
 
 
-test = parse $ unlines [ "inp z"
-                       , "inp x"
+test = parse $ unlines [ "inp x"
+                       , "inp z"
                        , "mul z 3"
                        , "eql z x"
                        , "add z -1"
@@ -45,7 +49,9 @@ parse str = res
 
 
          reg = (char 'x' <++ char 'y' <++ char 'z' <++ char 'w') <* skipSpaces
-         const = ((read <$> munch1 C.isDigit) <++ (negate . read <$> (char '-' *> munch1 C.isDigit))) <* skipSpaces
+         const = ((read <$> munch1 C.isDigit)
+                  <++ (negate . read <$> (char '-' *> munch1 C.isDigit)))
+                 <* skipSpaces
 
          regc = (Left <$> reg) <++ (Right <$> const)
 
@@ -54,7 +60,8 @@ type Regs a = Map Char a
 data State a = State { regs :: Regs a, next_inp :: Int }
   deriving(Eq, Show)
 
-getInp env state = (env Map.! ("inp_"++ (show $ next_inp state)), state { next_inp = next_inp state + 1})
+getInp env state = (env Map.! ("inp_"++ (show $ next_inp state)),
+                    state { next_inp = next_inp state + 1})
 
 interp _ state [] = state
 interp env state (inst : rest) = interp env state' rest
@@ -72,7 +79,7 @@ interp env state (inst : rest) = interp env state' rest
                                Mul -> (*)
                                Div -> S.sQuot
                                Mod -> S.sRem
-                               Eql -> \e1 e2 -> S.ite (e1 S..== e2) 1 0
+                               Eql -> \e1 e2 -> S.ite (e1 .== e2) 1 0
                          in state{ regs = Map.insert r1 (fun e1 e2) $ regs state}
 
 programModel prog = do
@@ -81,18 +88,18 @@ programModel prog = do
   vars <- mapM S.sInt64 svars
   let zipped = zip svars vars
       env = Map.fromList zipped
-  mapM_ (\ inp -> S.constrain $ inp S..> 0 S..&& inp S..< 10) vars
+  mapM_ (\ inp -> S.constrain $ inp .> 0 .&& inp .< 10) vars
   let state = interp env initial prog
       z = regs state ! 'z'
-  S.constrain $ z S..== 0
+  S.constrain $ z .== 0
   let mnum = modelNo vars
   modelVar <- S.free "model number"
-  S.constrain $ modelVar S..== mnum
+  S.constrain $ modelVar .== mnum
   pure mnum
 
   where
     modelNo xs = foldl (\n x -> 10*n + x) 0 xs
-    initial = State (Map.fromList [ (r, 0) | r <- ['w'..'z'] ]) 0
+    initial = State (Map.fromList [ (r, 0) | r <- ['w', 'x', 'y', 'z'] ]) 0
 
 
 maximalModelNumber prog = S.optimize S.Lexicographic $
@@ -110,9 +117,63 @@ part2 prog = minimalModelNumber prog
 
 answer2 = part2 <$> input
 
+-- Alternative (slower) brute-force strategy
+
+ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
+               loop initialStates prog
+  where
+    initial = (0,0,0,0)
+    lookup 'z' !(v, _, _, _) = v
+    lookup 'w' !(_, v, _, _) = v
+    lookup 'x' !(_, _, v, _) = v
+    lookup 'y' !(_, _, _, v) = v
+    set 'z' !z (_, w, x, y) = (z, w, x, y)
+    set 'w' !w (z, _, x, y) = (z, w, x, y)
+    set 'x' !x (z, w, _, y) = (z, w, x, y)
+    set 'y' !y (z, w, x, _) = (z, w, x, y)
+
+    initialStates = V.fromList [(initial, 0)]
+
+    orig = length prog
+    lineno rest = orig - length rest
+    report rest states = concat ["Executing line: ", show $ lineno rest
+                                , " (keeping track of ", show $ V.length states, " states)"]
+
+    loop states [] = states
+    loop states (inst : rest) = --trace (report rest states) $
+                                loop states' rest
+      where
+        states' =
+          case inst of
+            Acc opr r1 rc -> V.map (\(regs, modelno) -> (update regs, modelno)) states
+              where
+                update regs = let e1 = lookup r1 regs
+                                  e2 = case rc of
+                                         Left r2 -> lookup r2 regs
+                                         Right n -> n
+                                  fun = case opr of
+                                          Add -> (+)
+                                          Mul -> (*)
+                                          Div -> quot
+                                          Mod -> rem
+                                          Eql -> \e1 e2 -> if e1 == e2 then 1 else 0
+                              in set r1 (fun e1 e2) regs
+            Inp r -> V.fromList . Map.toList $ V.foldl' unionStates Map.empty states
+              where
+                unionStates acc (regs, modelno) = Map.unionWith min acc (update regs modelno)
+                update regs modelno =
+                  Map.fromList [ (set r v regs, modelno * 10 + v) | v <- [1..9]]
+
+part2' prog = final
+  where
+    final = ainterp prog
+
+
 main = do
   inp <- input
   res1 <- part1 inp
   print res1
   res2 <- part2 inp
   print res2
+  putStrLn "Get ready for some brute-forcing, this will probably take 20 mins or so"
+  print $ part2' inp

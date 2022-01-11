@@ -13,7 +13,8 @@ executable day24
     main-is: day24.hs
     build-depends:    base ^>=4.14.3.0,
                       containers,
-                      sbv
+                      sbv,
+                      vector
 
 
     hs-source-dirs:   .
