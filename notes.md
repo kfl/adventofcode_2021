@@ -346,6 +346,12 @@ opportunity to practice with `sbv`.
 NICE-TO-HAVE: Clean up the code a bit, find out how to extract the
 result directly from the data type returned from `sbv`.
 
+Post event: Added a brute-force solution that explicitly keeps track
+of all possible states based on input that can only be 1-9. Current
+solution find the minimal model no in 20 mins, which is not as bad as
+I initially expected, but now I think it should be possible to do
+faster.
+
 
 Day 25
 ------
