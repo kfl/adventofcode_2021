@@ -153,17 +153,13 @@ ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs =
     report rest states = concat ["Executing line: ", show $ lineno rest
                                 , " (keeping track of ", show $ V.length states, " states)"]
 
-
-    mapInPlaceM f vec = MV.imapM_ (\ !i x -> MV.write vec i (f x)) vec
-
     loop states [] = states
     loop states (inst : rest) = --trace (report rest states) $
                                 loop states' rest
       where
         states' =
           case inst of
-            Acc opr r1 rc ->
-              V.modify (mapInPlaceM (\(regs, modelno) -> (update regs, modelno))) states
+            Acc opr r1 rc -> V.map (\(regs, modelno) -> (update regs, modelno)) states
               where
                 update regs = let e1 = lookup r1 regs
                                   e2 = case rc of
