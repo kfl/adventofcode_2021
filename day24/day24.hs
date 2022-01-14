@@ -137,10 +137,10 @@ ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs =
                loop initialStates prog
   where
     initial = (0,0,0,0)
-    lookup 'z' !(v, _, _, _) = v
-    lookup 'w' !(_, v, _, _) = v
-    lookup 'x' !(_, _, v, _) = v
-    lookup 'y' !(_, _, _, v) = v
+    lookup 'z' (v, _, _, _) = v
+    lookup 'w' (_, v, _, _) = v
+    lookup 'x' (_, _, v, _) = v
+    lookup 'y' (_, _, _, v) = v
     set 'z' !z (_, w, x, y) = (z, w, x, y)
     set 'w' !w (z, _, x, y) = (z, w, x, y)
     set 'x' !x (z, w, _, y) = (z, w, x, y)
