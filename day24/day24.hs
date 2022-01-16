@@ -11,6 +11,8 @@ import Text.ParserCombinators.ReadP
 import qualified Data.SBV as S
 import Data.SBV ( (.>), (.<), (.==), (.&&) )
 
+import Data.Bifunctor (first)
+
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as MV
 
@@ -63,7 +65,7 @@ type Regs a = Map Char a
 data State a = State { regs :: Regs a, next_inp :: Int }
   deriving(Eq, Show)
 
-getInp env state = (env Map.! ("inp_"++ (show $ next_inp state)),
+getInp env state = (env Map.! ("inp_"++ show (next_inp state)),
                     state { next_inp = next_inp state + 1})
 
 interp _ state [] = state
@@ -162,7 +164,7 @@ bfs_interp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' reg
       where
         states' =
           case inst of
-            Acc opr r1 rc -> V.map (\(regs, modelno) -> (update regs, modelno)) states
+            Acc opr r1 rc -> V.map (first update) states
               where
                 update regs = let e1 = lookup r1 regs
                                   e2 = case rc of
@@ -233,7 +235,7 @@ exactly_regs (z,w,x,y) = (exactly z, exactly w, exactly x, exactly y)
 rzero = exactly 0
 full = (1,9)
 
-range_interp state prog = fmap (rget 'z') $ loop state prog
+range_interp state prog = rget 'z' <$> loop state prog
   where
     loop state [] = return state
     loop state (inst : rest) =
@@ -245,7 +247,7 @@ range_interp state prog = fmap (rget 'z') $ loop state prog
                               e2 = case rc of
                                      Left r2 -> rget r2 regs
                                      Right n -> exactly n
-                          in fmap (rset r1 regs) $
+                          in rset r1 regs <$>
                              case opr of
                                Add -> return $ e1 +: e2
                                Mul -> return $ e1 *: e2
