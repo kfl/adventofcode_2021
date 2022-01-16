@@ -2,6 +2,7 @@
 
 module Main where
 
+import Control.Applicative (empty, (<|>))
 import qualified Data.Char as C
 import qualified Data.List as L
 import qualified Data.Map.Strict as Map
@@ -119,11 +120,13 @@ part2 prog = minimalModelNumber prog
 
 answer2 = part2 <$> input
 
--- Alternative (slower) brute-force strategy
+-- ------------------------------------------------------------------
+-- Alternative (slower) brute-force strategy. This corresponds roughly
+-- to a breadth-first search.
 
 newtype MinMap = MinMap (Map (Int, Int, Int, Int) Int) deriving (Eq, Show)
 
-unMinMap f (MinMap m) = f m
+unMinMap (MinMap m) = m
 
 instance Semigroup MinMap where
     (MinMap m1) <> (MinMap m2) = MinMap $ Map.unionWith min m1 m2
@@ -133,7 +136,7 @@ instance Monoid MinMap where
     mconcat ms = MinMap $ Map.unionsWith min [ m | MinMap m <- ms]
 
 
-ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
+bfs_interp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
                loop initialStates prog
   where
     initial = (0,0,0,0)
@@ -172,21 +175,136 @@ ainterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs =
                                           Mod -> rem
                                           Eql -> \e1 e2 -> if e1 == e2 then 1 else 0
                               in set r1 (fun e1 e2) regs
-            Inp r -> V.fromList . unMinMap Map.toList $ V.foldMap' expand states
+            Inp r -> V.fromList . Map.toList . unMinMap $ V.foldMap' expand states
               where
                 expand (regs, modelno) =
                   MinMap $ Map.fromList [ (set r v regs, modelno * 10 + v) | v <- [1..9]]
 
+
+
+
 part2' prog = final
   where
-    final = ainterp prog
+    final = bfs_interp prog
 
+
+-- ------------------------------------------------------------------
+-- Another alternative strategy. This corresponds to a depth-first
+-- search, where we use a crude value range analysis for pruning impossible
+-- paths.
+
+-- Inclusive ranges
+type Range = (Int, Int)
+
+inRange (a, b) x = a <= x && x <= b
+
+-- Rather than making the following ad-hoc operators, we could make
+-- Range an instance of the Num (+ and *) and Integral (quot and
+-- rem). It might enable us merge the two interpreters, but it also
+-- seems like overkill.
+
+exactly n = (n, n)
+(a,b) +: (c,d) = (a+c, b+d)
+(a,b) *: (c,d) = (minimum rs, maximum rs)
+  where rs = [x * y | x <- [a,b], y <- [c,d]]
+
+(a,b) /: (c,d) = (minimum rs, maximum rs)  -- is this correct?
+  where rs = [x `quot` y | x <- [a,b], y <- [c,d], y /= 0]
+
+(a,b) %: (c,d) = (0, d-1) -- is this true for negative numbers? Also we might be able to be more precise
+
+(a,b) ==: (c,d)
+  | a == b && a == c && a == d = (1,1)
+  | a <= d && c <= b = (0,1)
+  | otherwise = (0, 0)
+
+rget 'z' (v, _, _, _) = v
+rget 'w' (_, v, _, _) = v
+rget 'x' (_, _, v, _) = v
+rget 'y' (_, _, _, v) = v
+
+rset 'z' (_, w, x, y) !z = (z, w, x, y)
+rset 'w' (z, _, x, y) !w = (z, w, x, y)
+rset 'x' (z, w, _, y) !x = (z, w, x, y)
+rset 'y' (z, w, x, _) !y = (z, w, x, y)
+
+exactly_regs (z,w,x,y) = (exactly z, exactly w, exactly x, exactly y)
+
+rzero = exactly 0
+full = (1,9)
+
+range_interp state prog = fmap (rget 'z') $ loop state prog
+  where
+    loop state [] = return state
+    loop state (inst : rest) =
+      case inst of
+        Acc opr r1 rc -> do state' <- update state
+                            loop state' rest
+          where
+            update regs = let e1 = rget r1 regs
+                              e2 = case rc of
+                                     Left r2 -> rget r2 regs
+                                     Right n -> exactly n
+                          in fmap (rset r1 regs) $
+                             case opr of
+                               Add -> return $ e1 +: e2
+                               Mul -> return $ e1 *: e2
+                               Div -> if e2 == rzero then Nothing else return $ e1 /: e2
+                               Mod -> if e2 == rzero then Nothing else return $ e1 %: e2
+                               Eql -> return $ e1 ==: e2
+
+        Inp r -> loop (rset r state full) rest
+
+backtrack_interp prog = loop initial prog
+  where
+    asum = foldr (<|>) empty
+    zero = 0
+    initial = ((zero, zero, zero, zero), 0)
+
+    full_range_set r regs = rset r (exactly_regs regs) full
+
+    possible_inp r regs prog = case range_interp (full_range_set r regs) prog of
+                                   Just rng -> rng `inRange` 0
+                                   _ -> False
+
+    loop (regs, modelno) [] = if rget 'z' regs == 0 then return modelno
+                              else Nothing
+    loop (regs, modelno) (inst : rest) =
+      case inst of
+        Acc opr r1 rc -> do regs' <- update regs
+                            loop (regs', modelno) rest
+          where
+            update regs = let e1 = rget r1 regs
+                              e2 = case rc of
+                                     Left r2 -> rget r2 regs
+                                     Right n -> n
+                          in fmap (rset r1 regs) $
+                             case opr of
+                               Add -> return $ e1 + e2
+                               Mul -> return $ e1 * e2
+                               Div -> if e2 == 0 then Nothing else return $ e1 `quot` e2
+                               Mod -> if e2 == 0 then Nothing else return $ e1 `rem` e2
+                               Eql -> return $ if e1 == e2 then 1 else 0
+
+        Inp r
+          -- is it possible to assign a value in the range for r and end with 0 in the range for 'z'
+          | possible_inp r regs rest ->
+            asum [ loop (rset r regs v,  modelno * 10 + v) rest | v <- [1..9] ]
+          | otherwise -> Nothing
+
+part2'' prog = final
+  where
+    Just final = backtrack_interp prog
 
 main = do
   inp <- input
+  putStrLn "Solve part 1 with Z3"
   res1 <- part1 inp
   print res1
+  putStrLn "Solve part 2 with Z3"
   res2 <- part2 inp
   print res2
-  putStrLn "Get ready for some brute-forcing, this will probably take 20 mins or so"
+  putStrLn "Solve part 2 with backtracking"
+  print $ part2'' inp
+  putStrLn "Solve part 2 with brute-force, this will probably take 20 mins or so"
   print $ part2' inp
