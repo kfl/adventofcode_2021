@@ -137,7 +137,7 @@ instance Monoid MinMap where
     mconcat ms = MinMap $ Map.unionsWith min [ m | MinMap m <- ms]
 
 
-bfs_interp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
+bfsInterp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' regs == 0) $
                loop initialStates prog
   where
     initial = (0,0,0,0)
@@ -186,7 +186,7 @@ bfs_interp prog = V.minimum . V.map snd . V.filter (\(regs, _) -> lookup 'z' reg
 
 part2' prog = final
   where
-    final = bfs_interp prog
+    final = bfsInterp prog
 
 
 -- ------------------------------------------------------------------
@@ -229,12 +229,12 @@ rset 'w' (z, _, x, y) !w = (z, w, x, y)
 rset 'x' (z, w, _, y) !x = (z, w, x, y)
 rset 'y' (z, w, x, _) !y = (z, w, x, y)
 
-exactly_regs (z,w,x,y) = (exactly z, exactly w, exactly x, exactly y)
+exactlyRegs (z,w,x,y) = (exactly z, exactly w, exactly x, exactly y)
 
 rzero = exactly 0
 full = (1,9)
 
-range_interp state prog = rget 'z' <$> loop state prog
+rangeInterp state prog = rget 'z' <$> loop state prog
   where
     loop state [] = return state
     loop state (inst : rest) =
@@ -256,14 +256,14 @@ range_interp state prog = rget 'z' <$> loop state prog
 
         Inp r -> loop (rset r state full) rest
 
-backtrack_interp prog = loop initial prog
+backtrackInterp prog = loop initial prog
   where
     zero = 0
     initial = ((zero, zero, zero, zero), 0)
 
-    full_range_set r regs = rset r (exactly_regs regs) full
+    full_range_set r regs = rset r (exactlyRegs regs) full
 
-    possible_inp r regs prog = case range_interp (full_range_set r regs) prog of
+    possible_inp r regs prog = case rangeInterp (full_range_set r regs) prog of
                                    Just rng -> rng `inRange` 0
                                    _ -> False
 
@@ -294,7 +294,7 @@ backtrack_interp prog = loop initial prog
 
 part2'' prog = final
   where
-    Just final = backtrack_interp prog
+    Just final = backtrackInterp prog
 
 main = do
   inp <- input
