@@ -2,7 +2,6 @@
 
 module Main where
 
-import Control.Applicative (empty, (<|>))
 import qualified Data.Char as C
 import qualified Data.List as L
 import qualified Data.Map.Strict as Map
@@ -12,7 +11,7 @@ import qualified Data.SBV as S
 import Data.SBV ( (.>), (.<), (.==), (.&&) )
 
 import Data.Bifunctor (first)
-
+import Data.Foldable (asum)
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as MV
 
@@ -259,7 +258,6 @@ range_interp state prog = rget 'z' <$> loop state prog
 
 backtrack_interp prog = loop initial prog
   where
-    asum = foldr (<|>) empty
     zero = 0
     initial = ((zero, zero, zero, zero), 0)
 
