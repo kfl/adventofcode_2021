@@ -5,3 +5,4 @@ newdist/
 *.prof
 *.exe
 *.dll
+aoc-gitcrypt.key
